@@ -1,0 +1,15 @@
+.Rproj.user
+.Rhistory
+.RData
+.Ruserdata
+.ipynb_checkpoints
+/coco-annotator
+/graphs
+/invisible
+/detectron2
+*.JPG
+*.png
+*.jpg
+*.jpeg
+*.tif
+*.bat

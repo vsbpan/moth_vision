@@ -1,0 +1,32 @@
+Package: mothzer
+Type: Package
+Title: Misc moth computer vision project library
+Version: 0.0.2
+Date: 2023-12-13
+Authors@R: 
+    person("Vincent", "Pan", email = "vsbpan@gmail.com",
+             role = c("aut", "cre"), comment = c(ORCID = "0000-0001-9892-7805"))
+Maintainer: Vincent Pan <vsbpan@gmail.com>
+Description: Misc moth computer vision project library
+License: GPL (>= 3)
+Depends:
+    imager,
+    tidyverse,
+	vmisc,
+    doParallel,
+    R (>= 3.5)
+Imports:
+    doSNOW,
+    foreach,
+    shiny,
+    imagerExtra,
+    insight,
+    matrixStats,
+    jsonlite,
+    spatstat.geom,
+    spatstat.utils,
+    rlang,
+    pkgload,
+    devtools
+Suggests:
+
