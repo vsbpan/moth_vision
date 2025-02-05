@@ -95,8 +95,6 @@ format_categories_COCO <- function(df){
 }
 
 format_images_COCO <- function(df_meta, df_inference){
-  df_meta$file_name <- gsub("\\\\","/", df_meta$file_name)
-  df_inference$file_name <- gsub("\\\\","/", df_inference$file_name)
   dim_list <- parse_pylist(df_meta$image_size, simplify = FALSE)
   empty_list_list <- lapply(seq_len(nrow(df_meta)), function(x) vector(mode = "list", length = 0))
   
@@ -145,27 +143,6 @@ format_annotations_COCO <- function(df){
   instance_id <- sprintf("%06d", df$instance_id) # add up 0 padding to length 6
   id <- as.integer(as.numeric(gsub_element_wise("000000$", instance_id, img_id)))
   
-  if(has_keypoints(df)){
-    kp <- parse_pylist(df$keypoints)
-    kp_flag_index <- seq_len(ncol(kp))[seq_len(ncol(kp)) %% 3 == 0]
-    kp[,kp_flag_index] <- 2 # overwrite score with flag
-    kp <- apply(round(kp), 1, identity, simplify = FALSE)
-  }
-  
-  seg <- parse_pylist(df$polygon, simplify = FALSE) %>% 
-    lapply(function(x){
-      z <- parse_polygon_vec(x)
-      if(is.null(z)){
-        return(
-          vector(mode= "list", length = 0)
-        )
-      } else {
-        return(
-          list(as.vector(t(z)))
-        )
-      }
-    })
-  
   annotations <- data.frame(
     "category_id" = thing_id,
     "id" = id,
@@ -173,12 +150,32 @@ format_annotations_COCO <- function(df){
     "iscrowd" = FALSE
   )
   
-  
   annotations$bbox <- df$bbox %>% parse_pylist(simplify = FALSE) %>% lapply(round)
   
-  annotations$segmentation <- unname(seg)
+  if(has_mask(df)){
+    seg <- parse_pylist(df$polygon, simplify = FALSE) %>% 
+      lapply(function(x){
+        z <- parse_polygon_vec(x)
+        if(is.null(z)){
+          return(
+            vector(mode= "list", length = 0)
+          )
+        } else {
+          return(
+            list(as.vector(t(z)))
+          )
+        }
+      })
+    
+    annotations$segmentation <- unname(seg)
+  }
+  
   
   if(has_keypoints(df)){
+    kp <- parse_pylist(df$keypoints)
+    kp_flag_index <- seq_len(ncol(kp))[seq_len(ncol(kp)) %% 3 == 0]
+    kp[,kp_flag_index] <- 2 # overwrite score with flag
+    kp <- apply(round(kp), 1, identity, simplify = FALSE)
     annotations$num_keypoints <- as.integer(ifelse(lapply(kp, is.null) %>%
                                                      do.call("c",.),
                                                    0,

@@ -1,11 +1,11 @@
-# Mask area generic
-mask_area <- function(x, ...){
-  UseMethod("mask_area")
-}
-# Generic method
-bbox_area <- function(x, ...){
-  UseMethod("bbox_area")
-}
+# # Mask area generic
+# mask_area <- function(x, ...){
+#   UseMethod("mask_area")
+# }
+# # Generic method
+# bbox_area <- function(x, ...){
+#   UseMethod("bbox_area")
+# }
 as.Json <- function(x, ...){
   UseMethod("as.Json")
 }
@@ -36,21 +36,21 @@ as.data_dict <- function(x, ...){
 #                  class = "data_dict", 
 #                  method = `[.data_dict`)
 # 
-registerS3method(genname = "mask_area", 
-                 class = "default", 
-                 method = mask_area.default)
-
-registerS3method(genname = "mask_area", 
-                 class = "data_dict", 
-                 method = mask_area.data_dict)
-
-registerS3method(genname = "bbox_area", 
-                 class = "default", 
-                 method = bbox_area.default)
-
-registerS3method(genname = "bbox_area", 
-                 class = "data_dict", 
-                 method = bbox_area.data_dict)
+# registerS3method(genname = "mask_area", 
+#                  class = "default", 
+#                  method = mask_area.default)
+# 
+# registerS3method(genname = "mask_area", 
+#                  class = "data_dict", 
+#                  method = mask_area.data_dict)
+# 
+# registerS3method(genname = "bbox_area", 
+#                  class = "default", 
+#                  method = bbox_area.default)
+# 
+# registerS3method(genname = "bbox_area", 
+#                  class = "data_dict", 
+#                  method = bbox_area.data_dict)
 
 registerS3method(genname = "as.Json", 
                  class = "list", 

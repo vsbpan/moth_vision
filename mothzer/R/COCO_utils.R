@@ -1,16 +1,3 @@
-
-# Set up generic
-# Print method for COCO_Json
-print.COCO_Json <- function(x){
-  a <- nrow(x$images)
-  b <- nrow(x$annotations)
-  things <- cli::col_yellow(x$categories[,"name"])
-  cat(cli::cli_text("COCO annotation with {a} image{?s} and {b} annotation{?s}"))
-  cat(cli::cli_text("things: {things}"))
-}
-
-
-
 # Convert data dict object to Json object
 # as.Json.data_dict <- function(x){
 #   
@@ -285,7 +272,7 @@ merge_COCO <- function(...){
     rownames(o) <- paste0(i,"_",rownames(o))
     o
   }, x = dots) %>% 
-    do.call("rbind",.) %>% 
+    do.call("rbind.fill",.) %>% 
     unique()
   
   
@@ -297,7 +284,7 @@ merge_COCO <- function(...){
     rownames(o) <- paste0(i,"_",rownames(o))
     o
   }, x = dots) %>% 
-    do.call("rbind",.) %>% 
+    do.call("rbind.fill",.) %>% 
     unique()
   
   images <- lapply(seq_along(dots), function(i, x){
@@ -305,7 +292,7 @@ merge_COCO <- function(...){
     rownames(o) <- paste0(i,"_",rownames(o))
     o
   }, x = dots) %>% 
-    do.call("rbind",.) %>% 
+    do.call("rbind.fill",.) %>% 
     unique()
   
   # n <- length(images$id)
@@ -374,7 +361,7 @@ update_manual_COCO <- function(reference_COCO, manual_COCO){
   stopifnot(is.COCO(manual_COCO), is.COCO(reference_COCO))
   
   empty_COCO <- subset_COCO(reference_COCO, 
-                            setdiff(reference_COCO$images$file_name,
+                            base::setdiff(reference_COCO$images$file_name,
                                     manual_COCO$images$file_name)
   )
   empty_COCO <- wipe_annotations_COCO(empty_COCO) 

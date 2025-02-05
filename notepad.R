@@ -25,6 +25,9 @@ d2 <- import_raw_inference(path_meta = "test_auto_annotation_image_meta_keypoint
 
 
 
-export_COCO(as.Json(d), "mask_predictions_v0_1.json")
-export_COCO(as.Json(d2), "kp_predictions_v0_1.json")
+
+
+
+
+
 

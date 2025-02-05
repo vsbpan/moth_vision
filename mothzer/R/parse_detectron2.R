@@ -85,6 +85,8 @@ parse_inference_info <- function(x){
 import_raw_inference <- function(path_meta, path_inference){
   df_inference <- suppressMessages(read_csv(path_inference, progress = FALSE))
   df_meta <- suppressMessages(read_csv(path_meta, progress = FALSE))
+  df_meta$file_name <- gsub("\\\\","/", df_meta$file_name)
+  df_inference$file_name <- gsub("\\\\","/", df_inference$file_name)
   out <- list(
     "meta" = df_meta,
     "inference" = df_inference
@@ -93,13 +95,7 @@ import_raw_inference <- function(path_meta, path_inference){
   return(out)
 }
 
-print.raw_inference <- function(x){
-  a <- nrow(x$meta)
-  b <- nrow(x$inference)
-  things <- cli::col_yellow(unique(x$inference$thing_class))
-  cat(cli::cli_text("Raw inference annotation with {a} image{?s} and {b} annotation{?s}"))
-  cat(cli::cli_text("things: {things}"))
-}
+
 
 # Take formatted detectron2 predictions from python and parse into 'data_dict' object 
 # parse_inference <- function(df, mode = c("inference","evaluate")){

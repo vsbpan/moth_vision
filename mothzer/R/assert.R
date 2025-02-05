@@ -15,3 +15,7 @@ is.COCO <- function(x){
 has_keypoints <- function(df){
   "keypoints" %in% names(df)
 }
+
+has_mask <- function(df){
+  "polygon" %in% names(df)
+}

@@ -1,4 +1,4 @@
-check_image_registration <- function(path, register = FALSE){
+check_image_registration <- function(path, register = FALSE, quiet = FALSE){
   database <- fetch_image_database()
   
   fn <- parse_file_name(path, keep_extn = TRUE)
@@ -7,7 +7,10 @@ check_image_registration <- function(path, register = FALSE){
   fn_unmatched <- unique(fn[!status])
   n <- length(fn_unmatched)
   if(n == 0){
-    cli::cli_alert_success("All images have been registered.")
+    if(!quiet){
+      cli::cli_alert_success("All images have been registered.")
+    }
+    
     if(register){
       return(invisible(database))
     } else {
@@ -16,7 +19,9 @@ check_image_registration <- function(path, register = FALSE){
     
   } else {
     if(register){
-      cli::cli_alert_info("{n} image{?s} ha{?s/ve} not yet been registered. Returning the updated database.")
+      if(!quiet){
+        cli::cli_alert_info("{n} image{?s} ha{?s/ve} not yet been registered. Returning the updated database.") 
+      }
       
       last_id <- if(nrow(database) > 0) max(database$image_id) else 0
       
@@ -34,7 +39,9 @@ check_image_registration <- function(path, register = FALSE){
       )
       return(invisible(res))
     } else {
-      cli::cli_alert_danger("{n} image{?s} ha{?s/ve} not yet been registered. Set {.code register = TRUE}?")
+      if(!quiet){
+        cli::cli_alert_danger("{n} image{?s} ha{?s/ve} not yet been registered. Set {.code register = TRUE}?")
+      }
       return(invisible(status))
     }
   }
@@ -48,9 +55,10 @@ register_image_id <- function(path){
 }
 
 assign_image_id <- function(path){
-  o <- check_image_registration(path)
+  o <- check_image_registration(path, quiet = TRUE)
   if(!all(o)){
-    cli::cli_abort("Some images have not been registed. Run {.code register_image_id(path)} to register the images.")
+    n <- sum(!o)
+    cli::cli_abort("{n} image{?s} ha{?s/ve} not been registed. Run {.code register_image_id(path)} to register the images.")
   }
   database <- fetch_image_database()
   fn <- parse_file_name(path, keep_extn = TRUE)
