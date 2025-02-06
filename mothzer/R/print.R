@@ -37,7 +37,7 @@ print.inlist <- function(x, ...){
   things <- cli::col_yellow(things)
   n_img <- length(image_ids)
   if(n_img != 1L){
-    cli::cli_warn("There are {n_img} unique image{?s} in the object {.code inlist}. Is this extected?")
+    cli::cli_warn("There are {n_img} unique image{?s} in the object {.var x}. Is this extected?")
   }
   r1 <- sprintf("%s instances in imageID: %s", n_instances, paste0(image_ids, collapse = ", "))
   w <- cli::console_width() * 0.7

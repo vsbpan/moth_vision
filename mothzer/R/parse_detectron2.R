@@ -111,7 +111,7 @@ as.inlist.list <- function(x){
   test <- vapply(x, is.instance, logical(1))
   if(any(!test)){
     o <- unique(do.all("c", lapply(x[!test], class)))
-    cli::cli_abort("An object of class {.code inlist} must be a list of {.code instance} objects. Offending classes: {o}")
+    cli::cli_abort("An object of class {.cls inlist} must be a list of {.cls instance} objects. Offending classes: {.cls o}")
   }
   class(x) <- c("inlist", "list")
   x
