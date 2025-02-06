@@ -105,10 +105,8 @@ format_categories_COCO <- function(df){
   # Sort tally_d by df_meta
   tally_d <- tally_d[match(tally_d$file_name,df_meta$file_name),]
   
-  setdiff_vec <- base::setdiff(unique(df_inference$file_name),unique(df_meta$file_name))
-  if(!isTRUE(length(setdiff_vec) == 0)){
-    cli::cli_abort("Detected file name in {.var df_inference} that is not found in {.var df_meta}. Are you sure these are the right files?")
-  }
+  validate_inference(df_meta, df_inference)
+  
   img_id <- assign_image_id(df_meta$file_name)
   
   images <- data.frame(

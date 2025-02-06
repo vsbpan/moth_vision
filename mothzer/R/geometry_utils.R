@@ -1,6 +1,6 @@
 # Turn polygon into a binary mask
 # Kind of finiky and doesn't perform as well as graphics::polygon(), but it'll do. 
-polygon2mask <- function(x,y = NULL, dim_xy = c(1000, 1000), 
+polygon2mask <- function(x,y = NULL, dim_xy, 
                          mini_mask = FALSE, raw_mat = FALSE){
   if(is.null(x)){
     mask <- imager::imfill(x = dim_xy[1], y = dim_xy[2], val = 0)
@@ -52,8 +52,9 @@ polygon2mask <- function(x,y = NULL, dim_xy = c(1000, 1000),
       spatstat.geom::as.array.im()
   }
   
+  warning("Not tested. Don't trust the results!")
   dim(mask) <- c(dim(mask)[1:2], 1, dim(mask)[3])
-  return(as.cimg(mask) %>% flip_xy())
+  return(as.cimg(mask))
 }
 
 # Turn a binary mask into a polygon
@@ -71,31 +72,6 @@ mask2polygon <- function(mask){
 polygon_centroid <- function(poly){
   o <- polygon2mask(poly, mini_mask = TRUE, raw_mat = TRUE)
   c(mean_wt(o$xcol, colSums(o$m)), mean_wt(o$yrow, rowSums(o$m)))
-}
-
-# Validate polygon to have only positive area
-validate_polygon <- function(poly){
-  poly <- poly[!is.na(poly[,1]) & !is.na(poly[,2]), , drop = FALSE]
-  
-  if(is.null(poly)){
-    return(NULL)
-  }
-  
-  if(nrow(poly) < 3){
-    return(NULL)
-  }
-  
-  if(length(unique(poly[,1])) < 2 || length(unique(poly[,2])) < 2){
-    return(NULL)
-  }
-  
-  if(!.polygon_area(poly) < 0){
-    out <- apply(poly, 2, rev)
-  } else {
-    out <- poly
-  }
-  class(out) <- c("polygon", "matrix", "array")
-  return(out)
 }
 
 area.polygon <- function(x, ...){
@@ -117,14 +93,22 @@ area.bbox <- function(x, ...){
   if(is.null(x)){
     return(0)
   }
-  z <- parse_bbox_vec(x)
-  prod(abs(z[1,] - z[2,]))
+  prod(abs(x[1,] - x[2,]))
 }
 
 # Polygon area calculation engine
-.polygon_area <- function(x){
-  spatstat.utils::Area.xypolygon(
-    list("x" = rev(x[,1]), "y" = rev(x[,2]))
-  )
+.polygon_area <- function(coords){
+  n <- nrow(coords)
+  x <- coords[, 1, drop = TRUE]
+  y <- coords[, 2, drop = TRUE]
+  x1 <- x
+  y1 <- y
+  x2 <- c(x[-1], x[1])  
+  y2 <- c(y[-1], y[1])
+  
+  # Shoelace formula calculation (vectorized sum of cross-products)
+  area <- sum(x1 * y2 - x2 * y1)
+  # The area is half the absolute value of the sum
+  return(abs(area) / 2)
 }
 

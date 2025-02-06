@@ -94,6 +94,7 @@ import_raw_inference <- function(path_meta, path_inference){
     "meta" = df_meta,
     "inference" = df_inference
   )
+  validate_inference(df_meta, df_inference)
   class(out) <- c("raw_inference", "list")
   return(out)
 }

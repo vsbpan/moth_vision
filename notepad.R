@@ -1,30 +1,28 @@
 vmisc::load_all2("mothzer")
 
-
-d <- read_csv("test_auto_annotation_inference_mask.csv")
-d2 <- read_csv("test_auto_annotation_image_meta_mask.csv")
-d3 <- read_csv("test_auto_annotation_inference_keypoints.csv")
-
-l <- import_COCO("mothz_sample1_masks.json")
-l2 <- import_COCO("mothz_sample1_keypoints.json")
-
-
-register_image_id(d$file_name)
-
-
-
 d <- import_raw_inference(path_meta = "test_auto_annotation_image_meta_mask.csv", 
                           path_inference = "test_auto_annotation_inference_mask.csv")
 
 
 d2 <- import_raw_inference(path_meta = "test_auto_annotation_image_meta_keypoints.csv", 
-                          path_inference = "test_auto_annotation_inference_keypoints.csv")
+                           path_inference = "test_auto_annotation_inference_keypoints.csv")
+
+l <- import_COCO("mothz_sample1_masks.json")
+l2 <- import_COCO("mothz_sample1_keypoints.json")
+
+
+register_image_id(d$meta$file_name)
+
+
+a$inlist$img100000$inst100008$polygon %>% as.data.frame() %>% shoelace_area()
+
+a$inlist$img100000$inst100008$bbox %>% area()
 
 
 
-d$meta$inference_info %>% 
 
-format_images_COCO(d$meta, d$inference)
+a$inlist$img100000$inst100008$polygon %>% 
+  area()
 
 
 d$meta
@@ -47,14 +45,10 @@ inlist(
 
 a$inlist[[5]]$inst500001$polygon
 
-b$inlist[[5]]$inst500001$bbox
+b$inlist[[5]]$inst500001$bbox %>% plot()
+b$inlist[[5]]$inst500001$bbox %>% area()
 
-b$inlist[[5]]$inst500001
-
-
-
-
-
+b$inlist[[5]]$inst500001$polygon %>% area()
 
 
 
