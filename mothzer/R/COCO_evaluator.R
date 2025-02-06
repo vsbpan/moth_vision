@@ -174,7 +174,6 @@ polygon_IOU <- function(poly, poly2){
 }
 
 # Compute IoU from masks
-#pkgbuild::compile_dll("spat1f/src/")
 mask_IOU <- function(img, img2, na.rm = FALSE, use_C = TRUE){
   if(is.null(img) | is.null(img2)){
     return(NA)
@@ -186,55 +185,6 @@ mask_IOU <- function(img, img2, na.rm = FALSE, use_C = TRUE){
     i <- mask_intersection_area(img, img2, na.rm)
     return(ifelse(a > 0, i / a, 0))
   }
-}
-
-# Bounding box area default method
-bbox_area.default <- function(x, ...){
-  if(is.null(x)){
-    return(0)
-  }
-  z <- parse_bbox_vec(x)
-  prod(abs(z[1,] - z[2,]))
-}
-
-# Bounding box area for data_dict
-bbox_area.data_dict <- function(x, ...){
-  get_bbox(x) %>% 
-    lapply(bbox_area.default) %>% 
-    do.call("c",.) %>% 
-    unname()
-}
-
-
-
-
-# Default method for mask area
-mask_area.default <- function(x, ...){
-  if(is.null(x)){
-    return(0)
-  }
-  if(is.pixset(x) || is.cimg(x)){
-    stopifnot(dim(x)[3] == 1)
-    sum(as.pixset(x))
-  } else {
-    abs(.polygon_area(x))
-  }
-}
-
-# Polygon area calculation engine
-.polygon_area <- function(x){
-  spatstat.utils::Area.xypolygon(
-    list("x" = rev(x[,1]), "y" = rev(x[,2]))
-  )
-}
-
-# Mask area method for data_dict
-mask_area.data_dict <- function(x, ...){
-    lapply(get_polygon(x), function(p){
-      mask_area.default(p)
-    }) %>% 
-    do.call("c",.) %>% 
-    unname()
 }
 
 # Compute IoU for two bounding boxes

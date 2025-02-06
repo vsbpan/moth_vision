@@ -94,7 +94,7 @@ format_categories_COCO <- function(df){
   return(res)
 }
 
-format_images_COCO <- function(df_meta, df_inference){
+.format_images_engine <- function(df_meta, df_inference){
   dim_list <- parse_pylist(df_meta$image_size, simplify = FALSE)
   empty_list_list <- lapply(seq_len(nrow(df_meta)), function(x) vector(mode = "list", length = 0))
   
@@ -109,22 +109,26 @@ format_images_COCO <- function(df_meta, df_inference){
   if(!isTRUE(length(setdiff_vec) == 0)){
     cli::cli_abort("Detected file name in {.code df_inference} that is not found in {.code df_meta}. Are you sure these are the right files?")
   }
-  
   img_id <- assign_image_id(df_meta$file_name)
   
   images <- data.frame(
     "id" = img_id,
-    #"dataset_id" = as.integer(1),
     "file_name" = basename(df_meta$file_name),
     "path" = df_meta$file_name,
     "height" = do.call("c", map(dim_list, 2)),
     "width" = do.call("c", map(dim_list, 1)),
-    "regenerate_thumbnail" = TRUE,
-    #"milliseconds" = as.integer(1),
-    "deleted" = FALSE,
     "num_annotations" = as.integer(tally_d$n)
-    #"annotated" = TRUE
   )
+  return(images)
+}
+
+
+format_images_COCO <- function(df_meta, df_inference){
+  images <- .format_images_engine(df_meta, df_inference)
+  # images$annotated <- TRUE
+  
+  images$deleted <- FALSE
+  images$regenerate_thumbnail <- TRUE
   
   images$category_ids <- empty_list_list
   images$events <- empty_list_list
@@ -140,8 +144,8 @@ format_annotations_COCO <- function(df){
     mutate(instance_id = seq_along(file_name))
   img_id <- assign_image_id(df$file_name)
   thing_id <- match_category_id(df$thing_class)
-  instance_id <- sprintf("%06d", df$instance_id) # add up 0 padding to length 6
-  id <- as.integer(as.numeric(gsub_element_wise("000000$", instance_id, img_id)))
+  instance_id <- sprintf("%05d", df$instance_id) # add up 0 padding to length 5
+  id <- as.integer(as.numeric(gsub_element_wise("00000$", instance_id, img_id)))
   
   annotations <- data.frame(
     "category_id" = thing_id,

@@ -94,5 +94,37 @@ validate_polygon <- function(poly){
   } else {
     out <- poly
   }
+  class(out) <- c("polygon", "matrix", "array")
   return(out)
 }
+
+area.polygon <- function(x, ...){
+  if(is.null(x)){
+    return(0)
+  }
+  abs(.polygon_area(x))
+}
+
+area.pixset <- function(x, ...){
+  if(is.null(x)){
+    return(0)
+  }
+  stopifnot(dim(x)[3] == 1)
+  sum(x)
+}
+
+area.bbox <- function(x, ...){
+  if(is.null(x)){
+    return(0)
+  }
+  z <- parse_bbox_vec(x)
+  prod(abs(z[1,] - z[2,]))
+}
+
+# Polygon area calculation engine
+.polygon_area <- function(x){
+  spatstat.utils::Area.xypolygon(
+    list("x" = rev(x[,1]), "y" = rev(x[,2]))
+  )
+}
+

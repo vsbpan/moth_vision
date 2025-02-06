@@ -12,6 +12,26 @@ is.COCO <- function(x){
   inherits(x, "COCO_Json") 
 }
 
+is.inlist <- function(x){
+  inherits(x, "inlist")
+}
+
+is.instance <- function(x){
+  inherits(x, "instance")
+}
+
+is.polygon <- function(x){
+  inherits(x, "polygon")
+}
+
+is.bbox <- function(x){
+  inherits(x, "bbox")
+}
+
+is.keypoints <- function(x){
+  inherits(x, "keypoints")
+}
+
 has_keypoints <- function(df){
   "keypoints" %in% names(df)
 }

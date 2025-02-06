@@ -10,47 +10,50 @@ as.Json <- function(x, ...){
   UseMethod("as.Json")
 }
 
-# Turn something into data_dict
-as.data_dict <- function(x, ...){
-  UseMethod("as.data_dict")
+as.inlist <- function(x, ...){
+  UseMethod("as.inlist")
+}
+
+as.instance <- function(x, ...){
+  UseMethod("as.instance")
+}
+
+as.parsed_inference <- function(x, ...){
+  UseMethod("as.parsed_inference")
+}
+
+area <- function(x, ...){
+  UseMethod("area")
 }
 
 
-# registerS3method(genname = "c", 
-#                  class = "data_dict", 
-#                  method = c.data_dict)
-# 
-# registerS3method(genname = "as.data_dict", 
-#                  class = "COCO_Json", 
-#                  method = as.data_dict.COCO_Json)
-# 
-# registerS3method(genname = "summary", 
-#                  class = "data_dict", 
-#                  method = summary.data_dict)
-# 
-# registerS3method(genname = "print", 
-#                  class = "data_dict", 
-#                  method = print.data_dict)
-# 
-# registerS3method(genname = "[", 
-#                  class = "data_dict", 
-#                  method = `[.data_dict`)
-# 
-# registerS3method(genname = "mask_area", 
-#                  class = "default", 
-#                  method = mask_area.default)
-# 
-# registerS3method(genname = "mask_area", 
-#                  class = "data_dict", 
-#                  method = mask_area.data_dict)
-# 
-# registerS3method(genname = "bbox_area", 
-#                  class = "default", 
-#                  method = bbox_area.default)
-# 
-# registerS3method(genname = "bbox_area", 
-#                  class = "data_dict", 
-#                  method = bbox_area.data_dict)
+registerS3method(genname = "area", 
+                 class = "bbox", 
+                 method = area.bbox)
+
+registerS3method(genname = "area", 
+                 class = "polygon", 
+                 method = area.polygon)
+
+registerS3method(genname = "area", 
+                 class = "pixset", 
+                 method = area.pixset)
+
+registerS3method(genname = "c", 
+                 class = "inlist", 
+                 method = c.inlist)
+
+registerS3method(genname = "as.parsed_inference", 
+                 class = "raw_inference", 
+                 method = as.parsed_inference.raw_inference)
+
+registerS3method(genname = "as.instance", 
+                 class = "list", 
+                 method = as.instance.list)
+
+registerS3method(genname = "as.inlist", 
+                 class = "list", 
+                 method = as.inlist.list)
 
 registerS3method(genname = "as.Json", 
                  class = "list", 
@@ -60,9 +63,25 @@ registerS3method(genname = "as.Json",
                  class = "raw_inference", 
                  method = as.Json.raw_inference)
 
-# registerS3method(genname = "as.Json", 
-#                  class = "data_dict", 
-#                  method = as.Json.data_dict)
+registerS3method(genname = "print", 
+                 class = "bbox", 
+                 method = print.bbox)
+
+registerS3method(genname = "print", 
+                 class = "polygon", 
+                 method = print.polygon)
+
+registerS3method(genname = "print", 
+                 class = "keypoints", 
+                 method = print.keypoints)
+
+registerS3method(genname = "print", 
+                 class = "instance", 
+                 method = print.instance)
+
+registerS3method(genname = "print", 
+                 class = "inlist", 
+                 method = print.inlist)
 
 registerS3method(genname = "print", 
                  class = "raw_inference", 

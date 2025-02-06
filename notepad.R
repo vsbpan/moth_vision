@@ -22,7 +22,34 @@ d2 <- import_raw_inference(path_meta = "test_auto_annotation_image_meta_keypoint
 
 
 
+d$meta$inference_info %>% 
 
+format_images_COCO(d$meta, d$inference)
+
+
+d$meta
+
+a <- as.parsed_inference(d)
+b <- as.parsed_inference(d2)
+
+c(b$inlist$img100000, a$inlist$img100000)
+
+a$inlist$img100000
+
+c.inlist(b$inlist$img100000$inst100001, b$inlist$img100000$inst100002) %>% class()
+
+
+inlist(
+  b$inlist$img100000$inst100002, 
+  b$inlist$img100000$inst100001
+)
+
+
+a$inlist[[5]]$inst500001$polygon
+
+b$inlist[[5]]$inst500001$bbox
+
+b$inlist[[5]]$inst500001
 
 
 

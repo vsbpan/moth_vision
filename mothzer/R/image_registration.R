@@ -25,7 +25,7 @@ check_image_registration <- function(path, register = FALSE, quiet = FALSE){
       
       last_id <- if(nrow(database) > 0) max(database$image_id) else 0
       
-      # Add space in last six digits for unique instance id.
+      # Add space in last five digits for unique instance id.
       new_id <- as.integer(((last_id / 100000) + seq_along(fn_unmatched)) * 100000)
       
       
