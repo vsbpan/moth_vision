@@ -91,6 +91,10 @@ registerS3method(genname = "print",
                  class = "COCO_Json", 
                  method = print.COCO_Json)
 
+registerS3method(genname = "summary", 
+                 class = "COCO_Json", 
+                 method = summary.COCO_Json)
+
 registerS3method(genname = "plot", 
                  class = "imlist", 
                  method = plot.imlist)

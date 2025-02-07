@@ -157,9 +157,9 @@ as.parsed_inference.raw_inference <- function(x){
     )
   
   x$inference <- x$inference %>% 
-    group_by(file_name) %>% 
-    mutate(instance_id = seq_along(file_name)) %>% 
-    ungroup()
+    dplyr::group_by(file_name) %>% 
+    dplyr::mutate(instance_id = seq_along(file_name)) %>% 
+    dplyr::ungroup()
   
   image_id <- assign_image_id(x$inference$file_name)
   # add up 0 padding to length 5

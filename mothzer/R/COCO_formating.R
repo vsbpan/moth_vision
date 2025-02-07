@@ -99,8 +99,8 @@ format_categories_COCO <- function(df){
   empty_list_list <- lapply(seq_len(nrow(df_meta)), function(x) vector(mode = "list", length = 0))
   
   tally_d <- df_inference %>% 
-    group_by(file_name) %>% 
-    tally()
+    dplyr::group_by(file_name) %>% 
+    dplyr::tally()
   
   # Sort tally_d by df_meta
   tally_d <- tally_d[match(tally_d$file_name,df_meta$file_name),]
@@ -138,8 +138,8 @@ format_images_COCO <- function(df_meta, df_inference){
 
 format_annotations_COCO <- function(df){
   df <- df %>% 
-    group_by(file_name) %>% 
-    mutate(instance_id = seq_along(file_name))
+    dplyr::group_by(file_name) %>% 
+    dplyr::mutate(instance_id = seq_along(file_name))
   img_id <- assign_image_id(df$file_name)
   thing_id <- match_category_id(df$thing_class)
   instance_id <- sprintf("%05d", df$instance_id) # add up 0 padding to length 5

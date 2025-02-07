@@ -174,6 +174,19 @@ as.Json.list <- function(x, ...){
   x
 }
 
+summary.COCO_Json <- function(x, ...){
+  
+  match_category_name <- function(id){
+    x$categories$name[which(id %in% x$categories$id)]
+  }
+  x$annotations %>% 
+    dplyr::group_by(category_id) %>% 
+    dplyr::tally() %>% 
+    dplyr::transmute(category = match_category_name(category_id),
+                     n_instances = n) %>% 
+    as.data.frame()
+}
+
 # Read in COCO format .json file and parse as COCO_jason object
 import_COCO <- function(x){
   out <- jsonlite::fromJSON(x) %>% as.Json()
@@ -230,7 +243,7 @@ split_COCO <- function(x, test, val = 0){
   fns <- x$images$file_name
   s_val <- sample(seq_len(n), round(n * val), replace = FALSE)
   
-  if(length(s_val) > 0 && !is.na(s_val)){
+  if(length(s_val) > 0 && all(!is.na(s_val))){
     s_test <- seq_len(n)[-s_val]
   } else {
     s_test <- seq_len(n)
