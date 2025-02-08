@@ -7,6 +7,10 @@ is_relative_path <- function(x){
   !grepl(getwd(), x)
 }
 
+is.nested <- function(x){
+  do.call("all",purrr::map(x, is.list))
+}
+
 # check if the object is COCO_Json
 is.COCO <- function(x){
   inherits(x, "COCO_Json") 

@@ -38,6 +38,22 @@ centroid <- function(x, ...){
   UseMethod("centroid")
 }
 
+IOU <- function(x, ...){
+  UseMethod("IOU")
+}
+
+registerS3method(genname = "IOU", 
+                 class = "polygon", 
+                 method = IOU.polygon)
+
+registerS3method(genname = "IOU", 
+                 class = "pixset", 
+                 method = IOU.pixset)
+
+registerS3method(genname = "IOU", 
+                 class = "bbox", 
+                 method = IOU.bbox)
+
 registerS3method(genname = "as.bbox", 
                  class = "polygon", 
                  method = as.bbox.polygon)
@@ -77,6 +93,10 @@ registerS3method(genname = "area",
 registerS3method(genname = "c", 
                  class = "inlist", 
                  method = c.inlist)
+
+registerS3method(genname = "[", 
+                 class = "inlist", 
+                 method = `[.inlist`)
 
 registerS3method(genname = "as.parsed_inference", 
                  class = "raw_inference", 

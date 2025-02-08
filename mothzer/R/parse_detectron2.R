@@ -129,6 +129,18 @@ c.inlist <- function(x, ...){
   return(out)
 }
 
+`[.inlist` <- function(x, ...){
+  args <- lapply(as.list(substitute(list(...)))[-1L], 
+                 function(x){
+                   eval(x, envir = parent.frame(3))
+                 })
+  class(x) <- c("list")
+  out <- do.call("[", c(list(x), args))
+  class(out) <- c("inlist", "list")
+  return(out)
+}
+
+
 inlist <- function(x, ...){
   args <- lapply(as.list(substitute(list(...)))[-1L], 
                  function(x){
@@ -142,6 +154,14 @@ inlist <- function(x, ...){
 
 find_labels <- function(x){
   base::intersect(c("bbox","polygon","keypoints"), names(x))
+}
+
+select_category <- function(x, categories = c("body", "forewing", "hindwing", "color_checker",
+                                              "ruler", "tag")){
+  categories <- match.arg(categories, several.ok = TRUE)
+  
+  cats <- do.call("c",purrr::map(x, "thing_class"))
+  x[cats %in% categories]
 }
 
 

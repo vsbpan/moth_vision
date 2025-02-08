@@ -1,11 +1,11 @@
 vmisc::load_all2("mothzer")
 
-d <- import_raw_inference(path_meta = "test_auto_annotation_image_meta_mask.csv", 
-                          path_inference = "test_auto_annotation_inference_mask.csv")
+d <- import_raw_inference(path_meta = "full_mothz_sample1_image_meta_mask.csv", 
+                          path_inference = "full_mothz_sample1_inference_mask.csv")
 
 
-d2 <- import_raw_inference(path_meta = "test_auto_annotation_image_meta_keypoints.csv", 
-                           path_inference = "test_auto_annotation_inference_keypoints.csv")
+d2 <- import_raw_inference(path_meta = "full_mothz_sample1_image_meta_keypoint.csv", 
+                           path_inference = "full_mothz_sample1_inference_keypoint.csv")
 
 l <- import_COCO("mothz_sample1_masks.json")
 l2 <- import_COCO("mothz_sample1_keypoints.json")
@@ -13,19 +13,6 @@ l2 <- import_COCO("mothz_sample1_keypoints.json")
 
 register_image_id(d$meta$file_name)
 
-
-a$inlist$img100000$inst100008$polygon %>% as.data.frame() %>% shoelace_area()
-
-a$inlist$img100000$inst100008$bbox %>% area()
-
-
-
-
-a$inlist$img100000$inst100008$polygon %>% 
-  area()
-
-
-d$meta
 
 a <- as.parsed_inference(d)
 b <- as.parsed_inference(d2)
@@ -61,6 +48,47 @@ b$inlist[[5]]$inst500001$polygon
 b$inlist[[5]]$inst500001$bbox %>% as.polygon()
 
 
+
+a$inlist$img100000
+
+
+
+prediction = a$inlist$img200000
+ground_truth = a$inlist$img100000
+
+mask_evaluator_engine(prediction, ground_truth, categories = c("forewing"))
+
+keypoint_evaluator_engine(
+  b$inlist$img100000,
+  b$inlist$img300000
+)
+
+a$inlist[1:5]
+
+
+mask_evaluator(
+  a$inlist[1:5],
+  a$inlist[6:10], 
+  categories = "tag"
+)
+
+
+keypoint_evaluator(
+  b$inlist[2:5],
+  b$inlist[3:6], 
+  thresh = seq(0.1, 0.9, by = 0.1)
+)
+
+
+
+mask_evaluator(
+  a$inlist[2],
+  a$inlist[3], 
+  thresh = seq(0.1, 0.9, by = 0.1)
+)
+
+
+debug(mask_evaluator_engine)
 
 
 

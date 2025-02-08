@@ -1,57 +1,167 @@
-# Wrapper for computing challenge metrics for binary masks
-mask_evaluator <- function(prediction, ground_truth, IOU_thresh = c(0.5, 0.75, 0.9), size_range = NULL, cores = 1){
+# Wrapper for computing challenge metrics for binary masks using the polygons. Prove a list of inlist for each prediction and ground truth
+mask_evaluator <- function(prediction_list, ground_truth_list, 
+                           thresh = c(0.5, 0.75, 0.9), 
+                           categories = c("body", "forewing", "hindwing", 
+                                          "color_checker","ruler", "tag"),
+                           cores = 1,
+                           use_bbox = FALSE){
   
-  if(!is.null(size_range)){
-    mask_size_vec <- area(ground_truth)
-    subset_i <- vmisc::is.between(mask_size_vec, size_range)
-    prediction <- prediction[subset_i]
-    ground_truth <- ground_truth[subset_i]
+  
+  if(length(prediction_list) != length(ground_truth_list)){
+    cli::cli_abort("{.var prediction_list} and {.var ground_truth_list} must be the same length and same order!")
   }
   
-  # Need to implement a method to match each ground truth to the nearest prediction
-  
-  z <- vmisc::pb_par_lapply(seq_along(prediction), 
-                            function(i, prediction, ground_truth){
-    polygon_IOU(get_polygon(prediction[i])[[1]],
-             get_polygon(ground_truth[i])[[1]])
+  z <- vmisc::pb_par_lapply(seq_along(prediction_list), 
+                            function(i, pred_l, gt_l){
+                              mask_evaluator_engine(
+                                pred_l[[i]],gt_l[[i]], 
+                                categories = categories,
+                                use_bbox = use_bbox
+                              )
   }, 
-  prediction = prediction,
-  ground_truth = ground_truth,
+  pred_l = prediction_list,
+  gt_l = ground_truth_list,
   cores = cores, 
   inorder = TRUE) %>% 
-    do.call("c",.)
+    unlist(TRUE, FALSE)
   
-  pred_exist <- lapply(get_polygon(prediction), function(x){
-    !any(vmisc::is.null_na(x))
-  }) %>% 
-    do.call("c",.)
-  gt_exist <- lapply(get_polygon(ground_truth), function(x){
-    !any(vmisc::is.null_na(x))
-  }) %>% 
-    do.call("c",.)
-  
-  out <- .evaluator_calc(z, IOU_thresh, pred_exist, gt_exist, thresh_name = "IOU")
+  out <- .evaluator_calc(z, thresh, thresh_name = "IOU")
   
   print(out$result)
   invisible(out)
 }
 
-# Compute challenge metrics from similarity scores and whether ground truth and prediction exists for each instance
-.evaluator_calc <- function(score, thresh, pred_exist, gt_exist, thresh_name = NULL){
+bbox_evaluator <- function(prediction_list, ground_truth_list, 
+                           thresh = c(0.5, 0.75, 0.9), 
+                           categories = c("body", "forewing", "hindwing", 
+                                          "color_checker","ruler", "tag"),
+                           cores = 1){
+  mask_evaluator(prediction_list, ground_truth_list, 
+                 thresh = thresh, 
+                 categories = categories,
+                 cores = cores,
+                 use_bbox = TRUE)
+}
+
+# Mask evaluator for a single inlist. Output the iou outcomes
+mask_evaluator_engine <- function(prediction, ground_truth, 
+                                  categories = c("body", "forewing", "hindwing", 
+                                                 "color_checker","ruler", "tag"), 
+                                  use_bbox = FALSE){
+  
+  o <- order(do.call("c",map(prediction, "score")))
+  prediction <- prediction[o]
+  geom <- if(use_bbox) "bbox" else "polygon"
+  
+  out_list <- vector(mode = "list", length = length(categories))
+  
+  for (i in seq_along(categories)){
+    cati <- categories[i]
+    pred_classi <- select_category(prediction, cati)
+    gt_classi <- select_category(ground_truth, cati)
+    
+    n_predi <- length(pred_classi)
+    n_gti <- length(gt_classi)
+    
+    
+    if(n_predi == 0 && n_gti == 0){
+      next
+    } else if(n_predi == 0){
+      out_list[[i]] <- rep("False_negative", n_gti)
+      names(out_list)[i] <- categories[i]
+      next
+    } else if(n_gti == 0){
+      out_list[[i]] <- rep("False_positive", n_predi)
+      names(out_list)[i] <- categories[i]
+      next
+    }
+    
+    
+    grid <- expand.grid(seq_len(n_predi), seq_len(n_gti))
+    
+    mat <- lapply(seq_len(nrow(grid)), function(i){
+      IOU(
+        pred_classi[[grid[i,1]]][[geom]],
+        gt_classi[[grid[i,2]]][[geom]]
+      )
+    }) %>% 
+      unlist() %>%  
+      matrix(nrow = n_predi, 
+             ncol = n_gti)
+    match_ids <- .which_max_no_replace(mat)
+    out_list[[i]] <- purrr::map2(seq_along(match_ids),match_ids, function(x,y){
+      if(y == "unmatched_row"){
+        return("False_positive")
+      } else if(y == "unmatched_column"){
+        return("False_negative")
+      } else {
+        return(as.character(mat[as.integer(x),as.integer(y)]))
+      }
+    }) %>% 
+      do.call("c", .)
+    names(out_list)[i] <- categories[i]
+  }
+  out_list <- purrr::keep(out_list, function(x){!is.null(x)})
+  return(out_list)
+}
+
+# Find which max but use up that column after each row is looped through
+.which_max_no_replace <- function(mat) {
+  nrow_mat <- nrow(mat)
+  ncol_mat <- ncol(mat)
+  
+  vmisc::warnifnot(all(mat!=-Inf))
+  
+  largest_indices <- numeric(nrow_mat)
+  
+  for (i in 1:nrow_mat) {
+    row_vector <- mat[i, ]
+    if(all(row_vector == -Inf)){
+      largest_idx <- "unmatched_row"
+      largest_indices[i] <- largest_idx
+      next
+    } else {
+      largest_idx <- which.max(row_vector)
+      largest_indices[i] <- largest_idx
+    }
+    mat[, largest_idx] <- -Inf
+  }
+  
+  largest_indices <- c(largest_indices, rep("unmatched_column", max(c(ncol_mat - nrow_mat, 0))))
+  
+  return(largest_indices)
+}
+
+
+# Compute the summary of challenge scores as error rates
+.evaluator_calc <- function(score, thresh, thresh_name = NULL){
   if(is.null(thresh_name)){
     thresh_name <- "score"
   }
   
-  mat <- outer(thresh, score, 
-               Vectorize(function(x, y){
-                 y >= x
-               }))
+  mat <- outer(score, thresh, 
+                Vectorize(function(x, y){
+                  if(x == "False_positive"){
+                    return("False_positive")
+                  } else if(x == "False_negative"){
+                    return("False_negative")
+                  } else {
+                    return(ifelse(as.numeric(x) >= y, "True_positive", "False_positive"))
+                  }
+                }))
+  count_class <- function(class_i){
+    apply(mat, 1, function(x){
+      x == class_i
+    }) %>% unlist() %>% 
+      sum()
+  }
   
   
-  TP <- as.vector(mat %*% gt_exist)
-  TN <- as.vector((!mat) %*% (!gt_exist))
-  FP <- as.vector((!mat) %*% pred_exist)
-  FN <- as.vector((!mat) %*% gt_exist)
+  
+  TP <- count_class("True_positive")
+  TN <- 0
+  FP <- count_class("False_positive")
+  FN <- count_class("False_negative")
   
   n <- length(score)
   
@@ -75,60 +185,122 @@ mask_evaluator <- function(prediction, ground_truth, IOU_thresh = c(0.5, 0.75, 0
 }
 
 
-# Nice wrapper for keypoint evaluation
-keypoint_evaluator <- function(prediction, ground_truth, 
+# Wrapper for computing challenge metrics for keypoints. Prove a list of inlist for each prediction and ground truth
+keypoint_evaluator <- function(prediction_list, ground_truth_list, 
                                k = c(50, 50), # From visually assessing a sample whether this is reliable for distinguishing false positive and true positive.
+                               categories = "forewing",
                                keypoints = c("inner", "outer"), 
-                               OKS_thresh = c(0.5, 0.75, 0.9), 
-                               size_range = NULL){
+                               thresh = c(0.5, 0.75, 0.9),
+                               cores = 1){
+  
+  if(length(prediction_list) != length(ground_truth_list)){
+    cli::cli_abort("{.var prediction_list} and {.var ground_truth_list} must be the same length and same order!")
+  }
+  if(length(k) != length(keypoints)){
+    cli::cli_abort("{.var k} and {.var keypoints} must be the same length!")
+  }
   
   keypoints <- match(match.arg(keypoints, several.ok = TRUE), c("inner", "outer"))
-  stopifnot(length(k) == length(keypoints))
   
   o <- order(keypoints)
   keypoints <- keypoints[o]
   k <- k[o]
   
-  mask_size_vec <- mask_area(ground_truth)
-  if(!is.null(size_range)){
-    subset_i <- is_between(mask_size_vec, size_range)
-    prediction <- prediction[subset_i]
-    ground_truth <- ground_truth[subset_i]
-  }
   
+  z <- vmisc::pb_par_lapply(seq_along(prediction_list), 
+                            function(i, pred_l, gt_l){
+                              keypoint_evaluator_engine(
+                                pred_l[[i]],gt_l[[i]], 
+                                categories = categories,
+                                keypoints = keypoints,
+                                k = k
+                              )
+                            }, 
+                            pred_l = prediction_list,
+                            gt_l = ground_truth_list,
+                            cores = cores, 
+                            inorder = TRUE) %>% 
+    unlist(TRUE, FALSE)
   
-  
-  z <- lapply(seq_along(prediction), function(i){
-    kp1 <- map(prediction[i], "keypoints")[[1]]
-    kp2 <- map(ground_truth[i], "keypoints")[[1]]
-    s2 <- mask_size_vec[i] # Mask size
-    
-    pred_exist <- !is.null(kp1)
-    gt_exist <- !is.null(kp2)
-    
-    if(!pred_exist | !gt_exist){
-      oks <- 0
-    } else {
-      oks <- keypoint_OKS(
-        kp1[keypoints,c(1,2), drop = FALSE], 
-        kp2[keypoints,c(1,2), drop = FALSE], 
-        s2 = s2, 
-        k = k, 
-        ground_truth_flag = kp1[keypoints,"score", drop = TRUE]
-      )
-    }
-    
-    c("oks" = oks, "pred_exist" = pred_exist, "gt_exist" = gt_exist)
-    
-  }) %>% 
-    do.call("rbind", .) %>% 
-    as.data.frame()
-  
-  out <- .evaluator_calc(z$ok, OKS_thresh, z$pred_exist, z$gt_exist, thresh_name = "OKS")
+  out <- .evaluator_calc(z, thresh, thresh_name = "OKS")
   
   print(out$result)
   invisible(out)
 }
+
+# keypoint evaluator for a single inlist. Output the oks outcomes
+keypoint_evaluator_engine <- function(prediction, ground_truth, 
+                                      categories = c("forewing"),
+                                      keypoints = c("inner", "outer"),
+                                      k = c(50, 50)){
+  
+  o <- order(do.call("c",map(prediction, "score")))
+  prediction <- prediction[o]
+  
+  out_list <- vector(mode = "list", length = length(categories))
+  
+  for (i in seq_along(categories)){
+    cati <- categories[i]
+    pred_classi <- select_category(prediction, cati)
+    gt_classi <- select_category(ground_truth, cati)
+    
+    n_predi <- length(pred_classi)
+    n_gti <- length(gt_classi)
+    
+    
+    if(n_predi == 0 && n_gti == 0){
+      next
+    } else if(n_predi == 0){
+      out_list[[i]] <- rep("False_negative", n_gti)
+      names(out_list)[i] <- categories[i]
+      next
+    } else if(n_gti == 0){
+      out_list[[i]] <- rep("False_positive", n_predi)
+      names(out_list)[i] <- categories[i]
+      next
+    }
+    
+    
+    grid <- expand.grid(seq_len(n_predi), seq_len(n_gti))
+    
+    mat <- lapply(seq_len(nrow(grid)), function(i){
+      kp1 <- pred_classi[[grid[i,1]]]$keypoints
+      kp2 <- gt_classi[[grid[i,2]]]$keypoints
+      s2 <- area(pred_classi[[grid[i,2]]]$polygon)
+      
+      if(is.null(kp1) || is.null(kp2)){
+        oks <- 0
+      } else {
+        oks <- keypoint_OKS(
+          kp1[keypoints,1:2, drop = FALSE],
+          kp2[keypoints,1:2, drop = FALSE],
+          s2 = s2, 
+          k = k, 
+          ground_truth_flag = kp2[keypoints,"score", drop = TRUE]
+        )
+        return(oks)
+      }
+    }) %>% 
+      unlist() %>%  
+      matrix(nrow = n_predi, 
+             ncol = n_gti)
+    match_ids <- .which_max_no_replace(mat)
+    out_list[[i]] <- purrr::map2(seq_along(match_ids),match_ids, function(x,y){
+      if(y == "unmatched_row"){
+        return("False_positive")
+      } else if(y == "unmatched_column"){
+        return("False_negative")
+      } else {
+        return(as.character(mat[as.integer(x),as.integer(y)]))
+      }
+    }) %>% 
+      do.call("c", .)
+    names(out_list)[i] <- categories[i]
+  }
+  out_list <- purrr::keep(out_list, function(x){!is.null(x)})
+  return(out_list)
+}
+
 
 # Object keypoint similarity score
 keypoint_OKS <- function(kp1, kp2, s2, k, ground_truth_flag){
@@ -156,23 +328,34 @@ keypoint_OKS <- function(kp1, kp2, s2, k, ground_truth_flag){
 mask_intersection_area <- function(img, img2, na.rm = FALSE){
   stopifnot(all.equal(dim(img), dim(img2)))
   stopifnot(dim(img)[3] == 1)
-  sum(as.pixset(img) & as.pixset(img2), na.rm = na.rm)
+  sum(img & img2, na.rm = na.rm)
 }
 
 # Polygon intersection area using the polyclip package
 polygon_intersection_area <- function(poly1, poly2){
-  polyclip::polyclip(as.list(as.data.frame(poly1)), 
+  intersection_poly <- polyclip::polyclip(as.list(as.data.frame(poly1)), 
                      as.list(as.data.frame(poly2)), 
-                     op = "intersection") %>% 
-    as.data.frame() %>% 
-    .polygon_area()
+                     op = "intersection")
+  
+  if(length(intersection_poly) < 1){
+    res <- 0
+  } else {
+    if(is.nested(intersection_poly)){
+      res <- do.call("sum",lapply(intersection_poly, function(x){.polygon_area(as.data.frame(x))}))
+    } else {
+      res <- intersection_poly %>% 
+        as.data.frame() %>% 
+        .polygon_area() 
+    }
+  }
+  return(res)
 }
 
 # Compute IoU from polygons
-polygon_IOU <- function(poly1, poly2){
-  a1 <- area(poly1)
-  a2 <- area(poly2)
-  i <- polygon_intersection_area(poly1, poly2)
+IOU.polygon <- function(x, y){
+  a1 <- area(x)
+  a2 <- area(y)
+  i <- polygon_intersection_area(x, y)
   a <- (a1 + a2 - i)
   iou <- ifelse(a > 0, i / a, 0)
   return(iou)
@@ -180,31 +363,20 @@ polygon_IOU <- function(poly1, poly2){
 
 # Defunct function mostly for testing
 # Compute IoU from masks
-mask_IOU <- function(img, img2, na.rm = FALSE){
+IOU.pixset <- function(img, img2, na.rm = FALSE){
   if(is.null(img) | is.null(img2)){
     return(NA)
   }
-  a <- sum(as.pixset(img) | as.pixset(img2), na.rm = na.rm)
+  a <- sum(img | img2, na.rm = na.rm)
   i <- mask_intersection_area(img, img2, na.rm)
   return(ifelse(a > 0, i / a, 0))
 }
 
 # Compute IoU for two bounding boxes
-bbox_IOU <- function(bbox1, bbox2){
-  
-  x_left = max(bbox1[1], bbox2[1])
-  y_top = max(bbox1[2], bbox2[2])
-  x_right = min(bbox1[3], bbox2[3])
-  y_bottom = min(bbox1[4], bbox2[4])
-  
-  if (x_right < x_left | y_bottom < y_top){
-    return(0)
-  }
-  
-  area_I <- (x_right - x_left) * (y_bottom - y_top)
-  area_union <- bbox_area(bbox1) + bbox_area(bbox2) - area_I
-  
-  return(ifelse(area_union > 0, area_I / area_union, 0))
+IOU.bbox <- function(x, y){
+  p1 <- as.polygon(x)
+  p2 <- as.polygon(y)
+  return(IOU(p1, p2))
 }
 
 
