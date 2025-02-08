@@ -18,7 +18,6 @@ Depends:
 Imports:
     doSNOW,
     foreach,
-    shiny,
     imagerExtra,
     insight,
     matrixStats,
@@ -27,6 +26,8 @@ Imports:
     spatstat.utils,
     rlang,
     pkgload,
-    devtools
+    devtools,
+    polyclip,
+	jpeg
 Suggests:
 

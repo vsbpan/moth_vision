@@ -1,6 +1,6 @@
 # Turn polygon into a binary mask
 # Kind of finiky and doesn't perform as well as graphics::polygon(), but it'll do. 
-polygon2mask <- function(x,y = NULL, dim_xy, 
+as.pixset.polygon <- function(x,y = NULL, dim_xy, 
                          mini_mask = FALSE, raw_mat = FALSE){
   if(is.null(x)){
     mask <- imager::imfill(x = dim_xy[1], y = dim_xy[2], val = 0)
@@ -17,6 +17,13 @@ polygon2mask <- function(x,y = NULL, dim_xy,
   
   x <- round(x)
   y <- round(y)
+  
+  mx <- max(x, na.rm = TRUE)
+  my <- max(y, na.rm = TRUE)
+  if(dim_xy[1] < mx || dim_xy[2] < my){
+    
+    cli::cli_abort("The maximum dimension in polygon is x = {mx}, y = {my}, but the supplied {.var dim_xy} is smaller.")
+  }
   
   mask <- spatstat.geom::owin(poly = list(
     x = x, y = y, check = FALSE
@@ -52,14 +59,22 @@ polygon2mask <- function(x,y = NULL, dim_xy,
       spatstat.geom::as.array.im()
   }
   
-  warning("Not tested. Don't trust the results!")
   dim(mask) <- c(dim(mask)[1:2], 1, dim(mask)[3])
-  return(as.cimg(mask))
+  
+  mask <- imager::as.pixset(flip_xy(imager::as.cimg(mask)))
+  return(mask)
 }
 
 # Turn a binary mask into a polygon
-mask2polygon <- function(mask){
-  l <- spatstat.geom::owin(mask = as.pixset(mask)[,,1,1]) %>% 
+as.polygon.pixset <- function(x){
+  if(any(dim(x)[3:4] > 1)){
+    cli::cli_warn("Expecting only channel = 1 and depth = 1. Ignoring the rest of the dimensions.")
+  }
+  if(sum(x) < 1){
+    cli::cli_warn("Binary mask has zero area. Returning NULL.")
+    return(NULL)
+  }
+  l <- spatstat.geom::owin(mask = x[,,1,1]) %>% 
     spatstat.geom::as.polygonal() %>% 
     .$bdry %>% 
     .[[1]]
@@ -68,10 +83,30 @@ mask2polygon <- function(mask){
   return(out)
 }
 
-# Calculate mask centroid using polygon
-polygon_centroid <- function(poly){
-  o <- polygon2mask(poly, mini_mask = TRUE, raw_mat = TRUE)
-  c(mean_wt(o$xcol, colSums(o$m)), mean_wt(o$yrow, rowSums(o$m)))
+centroid.pixset <- function(x){
+  if(sum(x) < 1){
+    cli::cli_warn("Binary mask has zero area. Returning NULL.")
+    return(NULL)
+  }
+  as.data.frame(x) %>% 
+    as.matrix() %>% 
+    matrixStats::colMeans2() %>% 
+    .[1:2]
+}
+
+centroid.polygon <- function(x){
+  n <- nrow(x)
+  x <- rbind(x, x[1,])
+  
+  x_coord <- x[, 1]
+  y_coord <- x[, 2]
+  area <- sum(x_coord[-(n + 1)] * y_coord[-1] - x_coord[-1] * y_coord[-(n + 1)]) / 2
+  
+  common_term <- (x_coord[-(n + 1)] * y_coord[-1] - x_coord[-1] * y_coord[-(n + 1)])
+  cx <- sum((x_coord[-(n + 1)] + x_coord[-1]) * common_term) / (6 * area)
+  cy <- sum((y_coord[-(n + 1)] + y_coord[-1]) * common_term) / (6 * area)
+  
+  return(c("x" = cx, "y" = cy))
 }
 
 area.polygon <- function(x, ...){
@@ -95,6 +130,32 @@ area.bbox <- function(x, ...){
   }
   prod(abs(x[1,] - x[2,]))
 }
+
+as.bbox.polygon <- function(x, ...){
+  res <- cbind(range(x[, 1]),(range(x[, 2])))
+  class(res) <- c("bbox", "matrix", "array")
+  colnames(res) <- c("x", "y")
+  res
+}
+
+as.polygon.bbox <- function(x){
+  x1 <- x[1, 1]
+  y1 <- x[1, 2]
+  x2 <- x[2, 1]
+  y2 <- x[2, 2]
+  
+  coords <- matrix(c(x1, y1,  # Bottom-left corner
+                     x2, y1,  # Bottom-right corner
+                     x2, y2,  # Top-right corner
+                     x1, y2), # Top-left corner
+                   ncol = 2, byrow = TRUE)
+  colnames(coords) <- c("x", "y")
+  # Close the polygon by repeating the first vertex at the end
+  coords <- rbind(coords, coords[1, ])
+  coords <- validate_polygon(coords)
+  return(coords)
+}
+
 
 # Polygon area calculation engine
 .polygon_area <- function(coords){

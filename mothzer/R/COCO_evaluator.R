@@ -2,14 +2,16 @@
 mask_evaluator <- function(prediction, ground_truth, IOU_thresh = c(0.5, 0.75, 0.9), size_range = NULL, cores = 1){
   
   if(!is.null(size_range)){
-    mask_size_vec <- mask_area(ground_truth)
-    subset_i <- is_between(mask_size_vec, size_range)
+    mask_size_vec <- area(ground_truth)
+    subset_i <- vmisc::is.between(mask_size_vec, size_range)
     prediction <- prediction[subset_i]
     ground_truth <- ground_truth[subset_i]
   }
   
+  # Need to implement a method to match each ground truth to the nearest prediction
   
-  z <- pb_par_lapply(seq_along(prediction), function(i, prediction, ground_truth){
+  z <- vmisc::pb_par_lapply(seq_along(prediction), 
+                            function(i, prediction, ground_truth){
     polygon_IOU(get_polygon(prediction[i])[[1]],
              get_polygon(ground_truth[i])[[1]])
   }, 
@@ -18,12 +20,13 @@ mask_evaluator <- function(prediction, ground_truth, IOU_thresh = c(0.5, 0.75, 0
   cores = cores, 
   inorder = TRUE) %>% 
     do.call("c",.)
+  
   pred_exist <- lapply(get_polygon(prediction), function(x){
-    !any(is_null_na(x))
+    !any(vmisc::is.null_na(x))
   }) %>% 
     do.call("c",.)
   gt_exist <- lapply(get_polygon(ground_truth), function(x){
-    !any(is_null_na(x))
+    !any(vmisc::is.null_na(x))
   }) %>% 
     do.call("c",.)
   
@@ -74,12 +77,12 @@ mask_evaluator <- function(prediction, ground_truth, IOU_thresh = c(0.5, 0.75, 0
 
 # Nice wrapper for keypoint evaluation
 keypoint_evaluator <- function(prediction, ground_truth, 
-                               k = c(100, 1000, 100), # From visually assessing a sample whether this is reliable for distinguishing false positive and true positive.
-                               keypoints = c("head", "middle", "tail"), 
+                               k = c(50, 50), # From visually assessing a sample whether this is reliable for distinguishing false positive and true positive.
+                               keypoints = c("inner", "outer"), 
                                OKS_thresh = c(0.5, 0.75, 0.9), 
                                size_range = NULL){
   
-  keypoints <- match(match.arg(keypoints, several.ok = TRUE), c("head", "middle", "tail"))
+  keypoints <- match(match.arg(keypoints, several.ok = TRUE), c("inner", "outer"))
   stopifnot(length(k) == length(keypoints))
   
   o <- order(keypoints)
@@ -148,13 +151,6 @@ keypoint_OKS <- function(kp1, kp2, s2, k, ground_truth_flag){
   return(oks)
 }
 
-# Mask union area
-mask_union_area <- function(img, img2, na.rm = FALSE){
-  stopifnot(all.equal(dim(img), dim(img2)))
-  stopifnot(dim(img)[3] == 1)
-  sum(as.pixset(img) | as.pixset(img2), na.rm = na.rm)
-}
-
 # Defunct function mostly for testing
 # Mask intersection area
 mask_intersection_area <- function(img, img2, na.rm = FALSE){
@@ -163,28 +159,34 @@ mask_intersection_area <- function(img, img2, na.rm = FALSE){
   sum(as.pixset(img) & as.pixset(img2), na.rm = na.rm)
 }
 
+# Polygon intersection area using the polyclip package
+polygon_intersection_area <- function(poly1, poly2){
+  polyclip::polyclip(as.list(as.data.frame(poly1)), 
+                     as.list(as.data.frame(poly2)), 
+                     op = "intersection") %>% 
+    as.data.frame() %>% 
+    .polygon_area()
+}
+
 # Compute IoU from polygons
-polygon_IOU <- function(poly, poly2){
-  a1 <- mask_area(poly)
-  a2 <- mask_area(poly2)
-  i <- mask_insersectC(polygon2mask(poly)[,,1,1], polygon2mask(poly2)[,,1,1])
+polygon_IOU <- function(poly1, poly2){
+  a1 <- area(poly1)
+  a2 <- area(poly2)
+  i <- polygon_intersection_area(poly1, poly2)
   a <- (a1 + a2 - i)
   iou <- ifelse(a > 0, i / a, 0)
   return(iou)
 }
 
+# Defunct function mostly for testing
 # Compute IoU from masks
-mask_IOU <- function(img, img2, na.rm = FALSE, use_C = TRUE){
+mask_IOU <- function(img, img2, na.rm = FALSE){
   if(is.null(img) | is.null(img2)){
     return(NA)
   }
-  if(use_C){
-    iouC(img[,,1,1], img2[,,1,1])
-  } else {
-    a <- mask_union_area(img, img2, na.rm)
-    i <- mask_intersection_area(img, img2, na.rm)
-    return(ifelse(a > 0, i / a, 0))
-  }
+  a <- sum(as.pixset(img) | as.pixset(img2), na.rm = na.rm)
+  i <- mask_intersection_area(img, img2, na.rm)
+  return(ifelse(a > 0, i / a, 0))
 }
 
 # Compute IoU for two bounding boxes

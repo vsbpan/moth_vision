@@ -22,10 +22,45 @@ as.parsed_inference <- function(x, ...){
   UseMethod("as.parsed_inference")
 }
 
+as.polygon <- function(x, ...){
+  UseMethod("as.polygon")
+}
+
+as.bbox <- function(x, ...){
+  UseMethod("as.bbox")
+}
+
 area <- function(x, ...){
   UseMethod("area")
 }
 
+centroid <- function(x, ...){
+  UseMethod("centroid")
+}
+
+registerS3method(genname = "as.bbox", 
+                 class = "polygon", 
+                 method = as.bbox.polygon)
+
+registerS3method(genname = "as.polygon", 
+                 class = "pixset", 
+                 method = as.polygon.pixset)
+
+registerS3method(genname = "as.polygon", 
+                 class = "bbox", 
+                 method = as.polygon.bbox)
+
+registerS3method(genname = "as.pixset", 
+                 class = "polygon", 
+                 method = as.pixset.polygon)
+
+registerS3method(genname = "centroid", 
+                 class = "polygon", 
+                 method = centroid.polygon)
+
+registerS3method(genname = "centroid", 
+                 class = "pixset", 
+                 method = centroid.pixset)
 
 registerS3method(genname = "area", 
                  class = "bbox", 

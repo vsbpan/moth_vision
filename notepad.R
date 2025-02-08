@@ -43,12 +43,25 @@ inlist(
 )
 
 
-a$inlist[[5]]$inst500001$polygon
+
+
+p1 <- a$inlist[[7]]$inst700004$polygon
+p2 <- a$inlist[[6]]$inst600004$polygon
+
+polygon_IOU(p1, p2)
+
 
 b$inlist[[5]]$inst500001$bbox %>% plot()
 b$inlist[[5]]$inst500001$bbox %>% area()
 
 b$inlist[[5]]$inst500001$polygon %>% area()
+
+
+b$inlist[[5]]$inst500001$polygon 
+b$inlist[[5]]$inst500001$bbox %>% as.polygon()
+
+
+
 
 
 

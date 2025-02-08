@@ -57,8 +57,8 @@ parse_keypoints_vec <- function(x){
 
 # Turn vector of bbox values into a matrix
 parse_bbox_vec <- function(x){
-  # First row is the top left corner
-  # Second row is the bottom right corner
+  # First row is the bottom left corner
+  # Second row is the top right corner
   out <- split_n_steps(x, 2L, name = c("x","y"))
   class(out) <- c("bbox", "matrix", "array")
   return(out)
