@@ -102,6 +102,10 @@ registerS3method(genname = "as.parsed_inference",
                  class = "raw_inference", 
                  method = as.parsed_inference.raw_inference)
 
+registerS3method(genname = "as.parsed_inference", 
+                 class = "COCO_Json", 
+                 method = as.parsed_inference.COCO_Json)
+
 registerS3method(genname = "as.instance", 
                  class = "list", 
                  method = as.instance.list)

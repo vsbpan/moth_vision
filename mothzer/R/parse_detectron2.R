@@ -57,18 +57,41 @@ parse_keypoints_vec <- function(x){
 
 # Turn vector of bbox values into a matrix
 parse_bbox_vec <- function(x){
+ 
+  out <- split_n_steps(x, 2L, name = c("x","y"))
+  
+  nr <- nrow(out)
+  nc <- ncol(out)
+  if(nr != 2 || nc != 2){
+    cli::cli_abort("The bbox should be a 2 X 2 matrix, but got a {nr} X {nc} matrix. Something is wrong!")
+  }
+  
   # First row is the bottom left corner
   # Second row is the top right corner
-  out <- split_n_steps(x, 2L, name = c("x","y"))
+  out <- apply(out, 2, sort, simplify = TRUE)
+  
   class(out) <- c("bbox", "matrix", "array")
   return(out)
 }
 
 # Parse coco annotation format segmentation coordinates
 parse_polygon_vec <- function(x){
-  out <- split_n_steps(x, n = 2L, name = c("x","y"))
-  out <- unique(out)
-  out <- validate_polygon(out)
+  foo <- function(x){
+    poly1 <- split_n_steps(x, n = 2L, name = c("x","y"))
+    poly1 <- unique(poly1)
+    poly1 <- validate_polygon(poly1)
+    return(poly1)
+  }
+  
+  
+  if(is.list(x)){
+    # A hack right now. Need to rebuild the polygon class to allow for multiple parts
+    index <- purrr::map_depth(x,1, length) %>% unlist() %>% which.max()
+    out <- foo(x[[index]])
+  } else {
+    out <- foo(x)
+  }
+  
   return(out)
 }
 
@@ -245,6 +268,69 @@ as.parsed_inference.raw_inference <- function(x){
   }) %>% 
     setNames(img_id2)
   
+  return(img_meta)
+}
+
+
+as.parsed_inference.COCO_Json <- function(x){
+  image_id <- assign_image_id(x$images$file_name)
+  
+  img_meta <- data.frame(
+    "id" = image_id,
+    "file_name" = x$images$file_name,
+    "path" = x$images$path,
+    "height" = x$images$height,
+    "width" = x$images$width,
+    "num_annotaitons" = x$images$num_annotations,
+    "version" = "COCO_annotaiton_import",
+    "inf_time" = NA_character_
+  )
+  
+  image_id2 <- image_id[match(x$annotations$image_id,x$images$id)]
+  image_id2 <- paste0("img",image_id2)
+  
+  
+  master_list <- list(
+    "instance_id" = x$annotations$id,
+    "image_id" = image_id2,
+    "bbox" = lapply(x$annotations$bbox, parse_bbox_vec),
+    "score" = as.list(rep(NA, nrow(x$annotations))),
+    "thing_class" = x$categories$name[match(x$annotations$category_id, x$categories$id)]
+  )
+  
+  if("segmentation" %in% names(x$annotations)){
+    master_list <- c(
+      master_list,
+      list(
+        "polygon" = lapply(x$annotations$segmentation, parse_polygon_vec)
+      )
+    )
+  }
+  
+  if("keypoints" %in% names(x$annotations)){
+    master_list <- c(
+      master_list,
+      list(
+        "keypoints" = lapply(x$annotations$keypoints, parse_keypoints_vec)
+      )
+    )
+  }
+  master_list <- lapply( 
+    seq_len(nrow(x$annotations)),
+    function(i){
+      as.instance(map(master_list, i))
+    }
+  )
+  names(master_list) <- paste0("inst", x$annotations$id)
+  img_meta <- as_tibble(img_meta)
+  image_id <- paste0("img",image_id)
+  img_meta$inlist <- lapply(image_id, function(i) {
+    index <- which(image_id2 %in% i)
+    as.inlist(
+      master_list[index]
+    )
+  }) %>% 
+    setNames(image_id)
   return(img_meta)
 }
 

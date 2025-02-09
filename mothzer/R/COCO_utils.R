@@ -383,3 +383,6 @@ update_manual_COCO <- function(reference_COCO, manual_COCO){
   out <- merge_COCO(force_format_COCO(manual_COCO, reference_COCO), empty_COCO)
   return(out)
 }
+
+
+

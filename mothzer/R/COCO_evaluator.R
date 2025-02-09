@@ -11,6 +11,14 @@ mask_evaluator <- function(prediction_list, ground_truth_list,
     cli::cli_abort("{.var prediction_list} and {.var ground_truth_list} must be the same length and same order!")
   }
   
+  if(!all(do.call("c",lapply(prediction_list, is.inlist)))){
+    cli::cli_abort("{.var prediction_list} must be a list of {.cls inlist}")
+  }
+  
+  if(!all(do.call("c",lapply(ground_truth_list, is.inlist)))){
+    cli::cli_abort("{.var ground_truth_list} must be a list of {.cls inlist}")
+  }
+  
   z <- vmisc::pb_par_lapply(seq_along(prediction_list), 
                             function(i, pred_l, gt_l){
                               mask_evaluator_engine(
@@ -80,10 +88,19 @@ mask_evaluator_engine <- function(prediction, ground_truth,
     grid <- expand.grid(seq_len(n_predi), seq_len(n_gti))
     
     mat <- lapply(seq_len(nrow(grid)), function(i){
-      IOU(
-        pred_classi[[grid[i,1]]][[geom]],
-        gt_classi[[grid[i,2]]][[geom]]
-      )
+      pred_geom <- pred_classi[[grid[i,1]]][[geom]]
+      gt_geom <- gt_classi[[grid[i,2]]][[geom]]
+      if(is.null(pred_geom) && is.null(gt_geom)){
+        return(NULL)
+      } else if(is.null(pred_geom)){
+        iou <- 0
+      } else if(is.null(gt_geom)){
+        iou <- 0
+      } else {
+        iou <- IOU(pred_geom,gt_geom)
+      }
+      
+      return(iou)
     }) %>% 
       unlist() %>%  
       matrix(nrow = n_predi, 
@@ -152,8 +169,8 @@ mask_evaluator_engine <- function(prediction, ground_truth,
   count_class <- function(class_i){
     apply(mat, 1, function(x){
       x == class_i
-    }) %>% unlist() %>% 
-      sum()
+    }) %>% 
+      rowSums()
   }
   
   
@@ -198,6 +215,14 @@ keypoint_evaluator <- function(prediction_list, ground_truth_list,
   }
   if(length(k) != length(keypoints)){
     cli::cli_abort("{.var k} and {.var keypoints} must be the same length!")
+  }
+  
+  if(!all(do.call("c",lapply(prediction_list, is.inlist)))){
+    cli::cli_abort("{.var prediction_list} must be a list of {.cls inlist}")
+  }
+  
+  if(!all(do.call("c",lapply(ground_truth_list, is.inlist)))){
+    cli::cli_abort("{.var ground_truth_list} must be a list of {.cls inlist}")
   }
   
   keypoints <- match(match.arg(keypoints, several.ok = TRUE), c("inner", "outer"))
