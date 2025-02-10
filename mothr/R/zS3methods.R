@@ -1,11 +1,4 @@
-# # Mask area generic
-# mask_area <- function(x, ...){
-#   UseMethod("mask_area")
-# }
-# # Generic method
-# bbox_area <- function(x, ...){
-#   UseMethod("bbox_area")
-# }
+
 as.Json <- function(x, ...){
   UseMethod("as.Json")
 }

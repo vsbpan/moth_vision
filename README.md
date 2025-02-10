@@ -8,17 +8,17 @@
     -   [Code libraries](#CodeLibraries)
     -   [File structure](#FileStructure)
 
-## Overview <a name="Overview"></a> {#overview}
+## Overview <a name="Overview"></a> 
 
 This repo hosts code for misc computer vision stuff for Eric's moth collections
 
-## Installation <a name="Installation"></a> {#installation}
+## Installation <a name="Installation"></a>
 
 Run `Package_installation.R` to install repository dependencies. For the dependency *vmisc*, see [vmisc](https://github.com/vsbpan/vmisc) GitHub page on installation instructions.
 
 **Need to add python installation requirements here.**
 
-## Description <a name="Description"></a> {#description}
+## Description <a name="Description"></a>
 
 ### Code libraries <a name="CodeLibraries"></a>
 
@@ -28,23 +28,23 @@ There are two custom libraries used in this project, one written in R and the ot
 
 This is a fork from the *detectron2* package released by facebook. I've tried to avoid editing the package source code directly so that the installation would be less of a pain. The new code additions are added in `detectron2/detectron2/custom/` and imported into the jupyter notebook as needed. If those functions are not imported, then the package should behave more or less the same as the version (v0.6) released.
 
-#### R library *mothzer*
+#### R library *mothr*
 
-The custom code written for this project are bundled as a pseudo simulated package *mothzer*. It can be imported using `vmisc::load_all2("mothzer")`, or `pkgload::load_all("mothzer")` to enter developer mode. The latter mode allows newly recompiled C++ code to be included in the package, but copies the .dll file for each time it is initiated, which can cause memory overflow, especially in multi-session parallel computing
+The custom code written for this project are bundled as a pseudo simulated package *mothr*. It can be imported using `vmisc::load_all2("mothr")`, or `pkgload::load_all("mothr")` to enter developer mode. The latter mode allows newly recompiled C++ code to be included in the package, but copies the .dll file for each time it is initiated, which can cause memory overflow, especially in multi-session parallel computing
 
 ##### Structure
 
--   `mothzer/` The root directory of the *mothzer* package. `.R` files in this directory are not loaded in the package.
-    -   `mothzer/R/` Contains the R source code
-    -   `mothzer/src/` Contains the C++ source code
+-   `mothr/` The root directory of the *mothr* package. `.R` files in this directory are not loaded in the package.
+    -   `mothr/R/` Contains the R source code
+    -   `mothr/src/` Contains the C++ source code
     -   `DESCRIPTION` Package description file
     -   `NAMESPACE` Namespace file
 
 ##### Key objects
 
 -   Image representations
-    -   `cimg`: RGB image tensor array from *imager* that represents an image in R. Can be used with functions from *imager*, *imagerExtra*, and *mothzer*.
-    -   `pixset`: Binary image tensor array from *imager* that represents binary masks in R. Can be used with functions from *imager*, *imagerExtra*, and *mothzer*. Generic methods implemented in *mothzer* include `plot()`, `area()`, `centroid()`, `as.polygon()`, `IOU()`.
+    -   `cimg`: RGB image tensor array from *imager* that represents an image in R. Can be used with functions from *imager*, *imagerExtra*, and *mothr*.
+    -   `pixset`: Binary image tensor array from *imager* that represents binary masks in R. Can be used with functions from *imager*, *imagerExtra*, and *mothr*. Generic methods implemented in *mothr* include `plot()`, `area()`, `centroid()`, `as.polygon()`, `IOU()`.
     -   `imlist`: A list of `cimg` or `pixset` objects.
 -   Annotation geometries
     -   `bbox`: Bounding box encoded as a 2 X 2 matrix of lower left and top right corner coordinates. Has generic methods such as `print()`, `area()`, `centroid()`, `as.polygon()`, `as.pixset()`, `IOU()`, `plot()`.

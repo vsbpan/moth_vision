@@ -51,13 +51,5 @@ check_installation_needed <- function(x, install = TRUE){
 }
 
 # Read dependencies in the simulated package
-pkg_discription <- packageDescription("mothzer", lib.loc = ".")
+pkg_discription <- packageDescription("mothr", lib.loc = ".")
 check_installation_needed(parse_dependencies(pkg_discription), install = TRUE)
-
-
-# herbivar installation
-# **** Only needed for JE simulation. I might rewrite the code in C++ in the future and loose the dependency.
-# install.packages("devtools") # so you can install packages from GitHub
-# install.packages("BiocManager") 
-# BiocManager::install("EBImage")
-# devtools::install_github("vsbpan/herbivar", build_vignettes = FALSE, dependencies = TRUE, force = TRUE)

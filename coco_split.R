@@ -1,5 +1,5 @@
 library(tidyverse)
-vmisc::load_all2("mothzer")
+vmisc::load_all2("mothr")
 
 
 l <- import_COCO("mothz_sample1_fullset_keypoints.json")

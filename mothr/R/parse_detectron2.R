@@ -190,7 +190,7 @@ select_category <- function(x, categories = c("body", "forewing", "hindwing", "c
 
 as.parsed_inference.raw_inference <- function(x){
   stopifnot(is.raw_inference(x))
-  img_meta <- mothzer:::.format_images_engine(x$meta, x$inference)
+  img_meta <- .format_images_engine(x$meta, x$inference)
   
   img_meta <- img_meta %>% 
     cbind(

@@ -1,5 +1,5 @@
 library(tidyverse)
-source("mothzer/file_mgmt.R")
+vmisc::load_all2("mothr")
 
 "C:/R_projects/mothz/coco-annotator/datasets/mothz_sample1/" %>% 
   list.files(full.names = TRUE) %>% 

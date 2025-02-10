@@ -1,4 +1,4 @@
-vmisc::load_all2("mothzer")
+vmisc::load_all2("mothr")
 
 d <- import_raw_inference(path_meta = "inference/full_mothz_sample1_image_meta_mask.csv", 
                           path_inference = "inference/full_mothz_sample1_inference_mask.csv")
