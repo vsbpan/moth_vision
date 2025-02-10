@@ -199,6 +199,18 @@ as.parsed_inference.raw_inference <- function(x){
         `rownames<-`(NULL)
     )
   
+  
+  if("tag_id_guess" %in% names(x$meta)){
+    img_meta$tag_id_guess <- parse_pylist(x$meta$tag_id_guess, as.character, simplify = FALSE) %>% 
+      lapply(parse_tag_id) %>% 
+      do.call("c", .)
+  }
+  
+  if("tag_text" %in% names(x$meta)){
+    img_meta$tag_text <- parse_pylist(x$meta$tag_text, as.character, simplify = FALSE) %>% 
+      lapply(parse_tag_text)
+  }
+  
   x$inference <- x$inference %>% 
     dplyr::group_by(file_name) %>% 
     dplyr::mutate(instance_id = seq_along(file_name)) %>% 
@@ -267,12 +279,12 @@ as.parsed_inference.raw_inference <- function(x){
     )
   }) %>% 
     setNames(img_id2)
-  
+  img_meta <- as.parsed_inference(img_meta)
   return(img_meta)
 }
 
 
-as.parsed_inference.COCO_Json <- function(x){
+as.parsed_inference.COCO_Json <- function(x, refind_bbox = TRUE){
   image_id <- assign_image_id(x$images$file_name)
   
   img_meta <- data.frame(
@@ -283,8 +295,10 @@ as.parsed_inference.COCO_Json <- function(x){
     "width" = x$images$width,
     "num_annotaitons" = x$images$num_annotations,
     "version" = "COCO_annotaiton_import",
-    "inf_time" = NA_character_
+    "inf_time" = NA_character_,
+    "tag_id_guess" = NA_character_
   )
+  img_meta$tag_text <- lapply(seq_len(nrow(img_meta)), function(x) character(0))
   
   image_id2 <- image_id[match(x$annotations$image_id,x$images$id)]
   image_id2 <- paste0("img",image_id2)
@@ -305,6 +319,10 @@ as.parsed_inference.COCO_Json <- function(x){
         "polygon" = lapply(x$annotations$segmentation, parse_polygon_vec)
       )
     )
+    if(refind_bbox){
+      cli::cli_alert("bbox overwritten with new bbox estimated from polygon. To use the original bbox, set {.code refind_bbox = FALSE}")
+      master_list$bbox <- lapply(master_list$polygon, as.bbox)
+    }
   }
   
   if("keypoints" %in% names(x$annotations)){
@@ -331,7 +349,81 @@ as.parsed_inference.COCO_Json <- function(x){
     )
   }) %>% 
     setNames(image_id)
+  img_meta <- as.parsed_inference(img_meta)
   return(img_meta)
 }
 
+
+as.parsed_inference.data.frame <- function(x){
+  x <- tibble::as_tibble(x)
+  as.pararsed_inference(x)
+}
+
+as.parsed_inference.tbl_df <- function(x){
+  class(x) <- c("parsed_inference", class(x))
+  x
+}
+
+
+merge_parsed_inference <- function(mask_df, kp_df){
+  mask_df_name <- deparse(substitute(mask_df))
+  kp_df_name <- deparse(substitute(kp_df))
+  if(!is.parsed_inference(mask_df)){
+    cli::cli_abort("{.var mask_df_name} must be of class {.cls parsed_inference}")
+  }
+  
+  if(!is.parsed_inference(kp_df)){
+    cli::cli_abort("{.var kp_df_name} must be of class {.cls parsed_inference}")
+  }
+  
+  assert_variable_in_df(mask_df, c("inlist", "id"))
+  assert_variable_in_df(kp_df, c("inlist", "id"))
+  
+  n_og <- nrow(mask_df)
+  n_kp <- nrow(kp_df)
+  matched <- match(kp_df$id, mask_df$id)
+  matched <- matched[!is.na(matched)]
+  n_new <- length(matched)
+  
+  cli::cli_alert_info("{n_new} of {n_og} images in {.var mask_df_name} found in {.var kp_df_name} of {n_kp} images.")
+  mask_df <- mask_df[matched, ,drop = FALSE]
+  
+  
+  mask_inl <- mask_df$inlist
+  kp_inl <- kp_df$inlist
+  
+  
+  if(!all(do.call("c",lapply(mask_inl, is.inlist)))){
+    cli::cli_abort("{.var mask_df_name} must have a column for a list of {.cls inlist}")
+  }
+  
+  if(!all(do.call("c",lapply(kp_inl, is.inlist)))){
+    cli::cli_abort("{.var kp_df_name} must have a column for a list of {.cls inlist}")
+  }
+  
+  mask_df$inlist <- purrr::map2(mask_inl, kp_inl, function(x,y){
+    c(x,y)
+  })
+  
+  return(mask_df)
+}
+
+
+parse_tag_id <- function(x){
+  x <- gsub("\\\\n|'| ", "", x)
+  res <- x[grepl("[0-9]DCR[0-9]", x)]
+  res <- unique(res)
+  if(length(res) != 1){
+    res <- NA_character_
+  }
+  return(res)
+}
+
+
+parse_tag_text <- function(x){
+  x <- gsub("'| ", "", x)
+  x <- gsub("\\\\n", " ", x)
+  x <- stringr::str_trim(x)
+  return(x)
+}
 

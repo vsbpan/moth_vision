@@ -1,0 +1,107 @@
+plot.keypoints <- function(x, 
+                          kp_name = rownames(x), 
+                          col = colorpal(nrow(x)), 
+                          pch = 19, 
+                          shrink = 1,
+                          ...){
+  if(is.null(x)){
+    cli::cli_alert_danger("No detected keypoint.")
+    return(invisible(NULL))
+  }
+  x <- x / shrink
+  x_coord <- x[,1]
+  y_coord <- x[,2]
+  
+  missing_coord <- is.na(x_coord) | is.na(y_coord)
+  
+  if(any(missing_coord)){
+    a <- kp_name[missing_coord]
+    cli::cli_alert_danger("No detected keypoint for {a}")
+  }
+
+  points(x = x_coord, y = y_coord, col = col, pch = pch, ...)
+}
+
+plot.polygon <- function(x, col = "green", alpha = 0.5, shrink = 1, ...){
+  col <- grDevices::adjustcolor(col = col, alpha.f = alpha)
+  x <- x / shrink
+  if(is.null(x)){
+    cli::cli_alert_danger("No polygon detected!")
+  } else {
+    x %>% polygon(col = col, ...)
+  }
+}
+
+# Draw bounding box
+plot.bbox <- function(x, fill = "#00000000", col = "red", alpha = 1, shrink = 1, ...){
+  col <- grDevices::adjustcolor(col = col, alpha.f = alpha)
+  
+  if(is.null(x)){
+    cli::cli_alert_danger("No bbox detected!")
+  }
+  x <- x / shrink
+  graphics::rect(xleft = x[1,1], 
+                 xright = x[2,1], 
+                 ybottom = x[1,2], 
+                 ytop = x[2,2], 
+                 col = fill, 
+                 border = col, 
+                 ...)
+}
+
+
+plot.instance <- function(x, 
+                          bbox = FALSE,
+                          mask_col = "green",
+                          mask_alpha = 0.5,
+                          kp_name = rownames(x$keypoints), 
+                          kp_col = colorpal(nrow(x$keypoints)), 
+                          kp_pch = 19,
+                          bbox_col = "red",
+                          bbox_fill = "#00000000",
+                          shrink = 1,
+                          ...){
+  if(has_bbox(x) && bbox){
+    plot(x$bbox, fill = bbox_fill, col = bbox_col, shrink = shrink)
+  }
+  if(has_mask(x)){
+    plot(x$polygon, col = mask_col, alpha = mask_alpha, shrink = shrink)
+  }
+  if(has_keypoints(x)){
+    plot(x$keypoints, kp_name = kp_name, pch = kp_pch, col = kp_col, shrink = shrink)
+  }
+}
+
+
+plot.inlist <- function(x, 
+                        bbox = FALSE,
+                        mask_alpha = 0.5,
+                        kp_pch = 19,
+                        bbox_col = "red",
+                        bbox_fill = "#00000000",
+                        shrink = 1,
+                        ...){
+  
+  for (i in seq_along(x)){
+    thing <- x[[i]]$thing_class
+    
+    plot(x[[i]], 
+         bbox = bbox,
+         mask_col = match_category_color(thing),
+         mask_alpha = mask_alpha,
+         kp_name = rownames(x$keypoints), 
+         kp_col = match_keypoint_color(thing)[[1]], 
+         kp_pch = kp_pch,
+         bbox_col = bbox_col,
+         bbox_fill = bbox_fill,
+         shrink = shrink,
+         ...)
+  }
+  
+  return(invisible(NULL))
+}
+
+
+
+
+

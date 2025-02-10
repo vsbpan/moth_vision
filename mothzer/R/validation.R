@@ -35,4 +35,63 @@ validate_inference <- function(df_meta, df_inference){
   
 }
 
+validate_evaluator_input <- function(predictions, ground_truths){
+  
+  if(!is.parsed_inference(predictions)){
+    cli::cli_abort("{.var predictions} must be of class {.cls parsed_inference}")
+  }
+  
+  if(!is.parsed_inference(ground_truths)){
+    cli::cli_abort("{.var ground_truths} must be of class {.cls parsed_inference}")
+  }
+  
+  assert_variable_in_df(predictions, c("inlist", "id"))
+  assert_variable_in_df(ground_truths, c("inlist", "id"))
+  
+  n_og <- nrow(predictions)
+  n_gt <- nrow(ground_truths)
+  matched <- match(ground_truths$id, predictions$id)
+  matched <- matched[!is.na(matched)]
+  n_new <- length(matched)
+  
+  cli::cli_alert_info("{n_new} of {n_og} image predictions found in {n_gt} ground truth{?s}.")
+  predictions <- predictions[matched, ,drop = FALSE]
+  
+  
+  predictions_inl <- predictions$inlist
+  ground_truths_inl <- ground_truths$inlist
+  
+  if(length(predictions_inl) != nrow(ground_truths)){
+    cli::cli_abort("{.var predictions} and {.var ground_truths_inl} must be the same length! Something is wrong in {.code validate_evaluator_input()}")
+  }
+  
+  if(!all(do.call("c",lapply(predictions_inl, is.inlist)))){
+    cli::cli_abort("{.var predictions} must have a column for a list of {.cls inlist}")
+  }
+  
+  if(!all(do.call("c",lapply(ground_truths_inl, is.inlist)))){
+    cli::cli_abort("{.var ground_truths} must have a column for a list of {.cls inlist}")
+  }
+  return(
+    list(
+      "pred" = predictions_inl,
+      "gt" = ground_truths_inl
+    )
+  )
+}
+
+assert_variable_in_df <- function(df, variable){
+  v <- variable[!variable %in% colnames(df)]
+  
+  if(length(v) > 0){
+    n <- length(v)
+    df_name <- deparse(substitute(df))
+    cli::cli_abort("Cannot find {n} column{?s} called {.var {v}} in the object {.var {df_name}}")
+  }
+}
+
+
+
+
+
 

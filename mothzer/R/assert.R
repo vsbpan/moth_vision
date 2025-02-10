@@ -11,7 +11,11 @@ is.nested <- function(x){
   do.call("all",purrr::map(x, is.list))
 }
 
-# check if the object is COCO_Json
+is.parsed_inference <- function(x){
+  inherits(x, "parsed_inference")
+}
+
+
 is.COCO <- function(x){
   inherits(x, "COCO_Json") 
 }
@@ -42,4 +46,8 @@ has_keypoints <- function(df){
 
 has_mask <- function(df){
   "polygon" %in% names(df)
+}
+
+has_bbox <- function(df){
+  "bbox" %in% names(df)
 }

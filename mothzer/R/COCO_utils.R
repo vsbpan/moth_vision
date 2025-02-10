@@ -327,7 +327,7 @@ merge_COCO <- function(...){
 }
 
 # Set new root path for coco_Json object
-set_new_path <- function(x, path_root){
+set_new_path_COCO <- function(x, path_root){
   stopifnot(is.COCO(x))
   x$images$path <- paste0(path_root, "/", x$images$file_name)
   return(x)

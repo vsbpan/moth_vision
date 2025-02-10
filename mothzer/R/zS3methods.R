@@ -70,6 +70,14 @@ registerS3method(genname = "as.pixset",
                  class = "polygon", 
                  method = as.pixset.polygon)
 
+registerS3method(genname = "as.pixset", 
+                 class = "bbox", 
+                 method = as.pixset.bbox)
+
+registerS3method(genname = "centroid", 
+                 class = "bbox", 
+                 method = centroid.bbox)
+
 registerS3method(genname = "centroid", 
                  class = "polygon", 
                  method = centroid.polygon)
@@ -97,6 +105,14 @@ registerS3method(genname = "c",
 registerS3method(genname = "[", 
                  class = "inlist", 
                  method = `[.inlist`)
+
+registerS3method(genname = "as.parsed_inference", 
+                 class = "data.frame", 
+                 method = as.parsed_inference.data.frame)
+
+registerS3method(genname = "as.parsed_inference", 
+                 class = "tbl_df", 
+                 method = as.parsed_inference.tbl_df)
 
 registerS3method(genname = "as.parsed_inference", 
                  class = "raw_inference", 
@@ -153,6 +169,26 @@ registerS3method(genname = "print",
 registerS3method(genname = "summary", 
                  class = "COCO_Json", 
                  method = summary.COCO_Json)
+
+registerS3method(genname = "plot", 
+                 class = "bbox", 
+                 method = plot.bbox)
+
+registerS3method(genname = "plot", 
+                 class = "polygon", 
+                 method = plot.polygon)
+
+registerS3method(genname = "plot", 
+                 class = "keypoints", 
+                 method = plot.keypoints)
+
+registerS3method(genname = "plot", 
+                 class = "instance", 
+                 method = plot.instance)
+
+registerS3method(genname = "plot", 
+                 class = "inlist", 
+                 method = plot.inlist)
 
 registerS3method(genname = "plot", 
                  class = "imlist", 

@@ -28,6 +28,6 @@ Imports:
     pkgload,
     devtools,
     polyclip,
-	jpeg
+    jpeg
 Suggests:
 

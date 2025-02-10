@@ -1,25 +1,14 @@
 # Wrapper for computing challenge metrics for binary masks using the polygons. Prove a list of inlist for each prediction and ground truth
-mask_evaluator <- function(prediction_list, ground_truth_list, 
+mask_evaluator <- function(predictions, ground_truths, 
                            thresh = c(0.5, 0.75, 0.9), 
                            categories = c("body", "forewing", "hindwing", 
                                           "color_checker","ruler", "tag"),
                            cores = 1,
                            use_bbox = FALSE){
   
+  l <- validate_evaluator_input(predictions, ground_truths)
   
-  if(length(prediction_list) != length(ground_truth_list)){
-    cli::cli_abort("{.var prediction_list} and {.var ground_truth_list} must be the same length and same order!")
-  }
-  
-  if(!all(do.call("c",lapply(prediction_list, is.inlist)))){
-    cli::cli_abort("{.var prediction_list} must be a list of {.cls inlist}")
-  }
-  
-  if(!all(do.call("c",lapply(ground_truth_list, is.inlist)))){
-    cli::cli_abort("{.var ground_truth_list} must be a list of {.cls inlist}")
-  }
-  
-  z <- vmisc::pb_par_lapply(seq_along(prediction_list), 
+  z <- vmisc::pb_par_lapply(seq_along(l$pred), 
                             function(i, pred_l, gt_l){
                               mask_evaluator_engine(
                                 pred_l[[i]],gt_l[[i]], 
@@ -27,17 +16,33 @@ mask_evaluator <- function(prediction_list, ground_truth_list,
                                 use_bbox = use_bbox
                               )
   }, 
-  pred_l = prediction_list,
-  gt_l = ground_truth_list,
+  pred_l = l$pred,
+  gt_l = l$gt,
   cores = cores, 
   inorder = TRUE) %>% 
     unlist(TRUE, FALSE)
   
   out <- .evaluator_calc(z, thresh, thresh_name = "IOU")
-  
-  print(out$result)
+  type <- if(use_bbox) "bbox" else "mask"
+  .evaluator_report(out, l$pred, categories, type)
   invisible(out)
 }
+
+.evaluator_report <- function(calc_out, validated_pred, categories, type){
+  nanno <- calc_out$n[1]
+  nimg <- length(validated_pred)
+  type <- cli::col_blue(type)
+  
+  has_things <- unname(unique(unlist(purrr::map_depth(validated_pred, 2, "thing_class"))))
+  things <- categories[categories %in% has_things]
+  things <- cli::col_yellow(things)
+  
+  cat(cli::cli_text("COCO {type} evaluation for {nanno} annotation{?s} across {nimg} image{?s}."))
+  cat(cli::cli_text("Things evaluated: {things}"))
+  cat("\n")
+  print(calc_out$result)
+}
+
 
 bbox_evaluator <- function(prediction_list, ground_truth_list, 
                            thresh = c(0.5, 0.75, 0.9), 
@@ -166,10 +171,12 @@ mask_evaluator_engine <- function(prediction, ground_truth,
                     return(ifelse(as.numeric(x) >= y, "True_positive", "False_positive"))
                   }
                 }))
+  
   count_class <- function(class_i){
     apply(mat, 1, function(x){
       x == class_i
-    }) %>% 
+    }, simplify = FALSE) %>% 
+      do.call("cbind", .) %>% 
       rowSums()
   }
   
@@ -203,27 +210,20 @@ mask_evaluator_engine <- function(prediction, ground_truth,
 
 
 # Wrapper for computing challenge metrics for keypoints. Prove a list of inlist for each prediction and ground truth
-keypoint_evaluator <- function(prediction_list, ground_truth_list, 
-                               k = c(50, 50), # From visually assessing a sample whether this is reliable for distinguishing false positive and true positive.
+keypoint_evaluator <- function(predictions, ground_truths, 
+                               k = c(5, 5), # From visually assessing a sample whether this is reliable for distinguishing false positive and true positive.
                                categories = "forewing",
                                keypoints = c("inner", "outer"), 
                                thresh = c(0.5, 0.75, 0.9),
                                cores = 1){
   
-  if(length(prediction_list) != length(ground_truth_list)){
-    cli::cli_abort("{.var prediction_list} and {.var ground_truth_list} must be the same length and same order!")
-  }
+  
   if(length(k) != length(keypoints)){
     cli::cli_abort("{.var k} and {.var keypoints} must be the same length!")
   }
   
-  if(!all(do.call("c",lapply(prediction_list, is.inlist)))){
-    cli::cli_abort("{.var prediction_list} must be a list of {.cls inlist}")
-  }
+  l <- validate_evaluator_input(predictions, ground_truths)
   
-  if(!all(do.call("c",lapply(ground_truth_list, is.inlist)))){
-    cli::cli_abort("{.var ground_truth_list} must be a list of {.cls inlist}")
-  }
   
   keypoints <- match(match.arg(keypoints, several.ok = TRUE), c("inner", "outer"))
   
@@ -232,7 +232,7 @@ keypoint_evaluator <- function(prediction_list, ground_truth_list,
   k <- k[o]
   
   
-  z <- vmisc::pb_par_lapply(seq_along(prediction_list), 
+  z <- vmisc::pb_par_lapply(seq_along(l$pred), 
                             function(i, pred_l, gt_l){
                               keypoint_evaluator_engine(
                                 pred_l[[i]],gt_l[[i]], 
@@ -241,15 +241,14 @@ keypoint_evaluator <- function(prediction_list, ground_truth_list,
                                 k = k
                               )
                             }, 
-                            pred_l = prediction_list,
-                            gt_l = ground_truth_list,
+                            pred_l = l$pred,
+                            gt_l = l$gt,
                             cores = cores, 
                             inorder = TRUE) %>% 
     unlist(TRUE, FALSE)
   
   out <- .evaluator_calc(z, thresh, thresh_name = "OKS")
-  
-  print(out$result)
+  .evaluator_report(out, l$pred, categories, "keypoint")
   invisible(out)
 }
 
@@ -257,7 +256,7 @@ keypoint_evaluator <- function(prediction_list, ground_truth_list,
 keypoint_evaluator_engine <- function(prediction, ground_truth, 
                                       categories = c("forewing"),
                                       keypoints = c("inner", "outer"),
-                                      k = c(50, 50)){
+                                      k = c(5, 5)){
   
   o <- order(do.call("c",map(prediction, "score")))
   prediction <- prediction[o]

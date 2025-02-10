@@ -94,6 +94,19 @@ centroid.pixset <- function(x){
     .[1:2]
 }
 
+centroid.bbox <- function(x){
+  res <- unname(colMeans(x))
+  return(c("x" = res[1], "y" = res[2]))
+}
+
+as.pixset.bbox <- function(x, dim_xy){
+  p <- imager::imfill(val = FALSE, dim = c(dim_xy, 1, 1))
+  x_coord <- x[,1]
+  y_coord <- x[,2]
+  p[vmisc::seq_interval(round(x_coord), by = 1),vmisc::seq_interval(round(y_coord), by = 1), , ] <- TRUE
+  return(p)
+}
+
 centroid.polygon <- function(x){
   n <- nrow(x)
   x <- rbind(x, x[1,])
