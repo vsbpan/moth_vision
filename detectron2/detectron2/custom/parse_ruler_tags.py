@@ -98,7 +98,7 @@ def read_img_tags(instances, image, meta_data, tesseract_loc = 'C:/Program Files
       for i in range(len(res)):
           try: 
               # Some denoising then sharpening
-            generic_text, tag_id_text = read_text(res[i])
+            generic_text, tag_id_text = read_text(res[i], tesseract_loc)
             text_generic.append(generic_text)
             text_tag_id.append(tag_id_text)
           except: 

@@ -8,15 +8,66 @@
     -   [Code libraries](#CodeLibraries)
     -   [File structure](#FileStructure)
 
-## Overview <a name="Overview"></a> 
+## Overview <a name="Overview"></a>
 
 This repo hosts code for misc computer vision stuff for Eric's moth collections
 
 ## Installation <a name="Installation"></a>
 
-Run `Package_installation.R` to install repository dependencies. For the dependency *vmisc*, see [vmisc](https://github.com/vsbpan/vmisc) GitHub page on installation instructions.
+Run `Package_installation.R` to install repository R dependencies. For the dependency *vmisc*, see [vmisc](https://github.com/vsbpan/vmisc) GitHub page on installation instructions. All the poster processing / analysis and non-deeplearning related tasks can be done with with the R package.
 
-**Need to add python installation requirements here.**
+To use the COCO-annotator, simply run, the following code after launching Docker desktop:
+
+``` bash        
+cd .\coco-annotator 
+start "firefox.exe" http://localhost:5000/ 
+Call docker-compose up
+```
+
+For computer vision tasks that uses deeplearning or more expensive image manipulations that involve the predictions of Mask-R-CNN, the python dependencies need to be installed.
+
+``` bash        
+# Create conda environment to install stuff into
+conda create -n "mothz" python=3.8.2
+conda activate mothz
+
+# Begin with detectron2 installations
+# Check CUDA version
+nvcc --version
+# Find the right pytorch versions for the CUDA version installed https://pytorch.org/
+# conda install pytorch==2.5.1 torchvision==0.20.1 torchaudio==2.5.1 pytorch-cuda=12.1 -c pytorch -c nvidia
+python -m pip install -e detectron2 to install Detectron2
+
+# Install Jupyter notbook
+pip install jupyterlab
+
+# Install other packages
+pip install opencv-contrib-python numpy matplotlib tensorflow pytesseract
+
+# I also installed some mothra dependencies but that is not required.
+# see `detectron2/requirements.txt`
+```
+
+To do anything with python using the jupyter notebooks, run
+
+``` bash        
+cd .
+Call conda activate mothz
+Call jupyter lab
+```
+
+To do anything with pytasseract
+
+``` python
+# Follow instructions to install tesseract
+# https://github.com/tesseract-ocr/tessdoc/blob/main/Installation.md
+# Find out where `tesseract.exe` is installed. 
+# `read_img_tags()` and `read_text()` has an argument `tesseract_loc` where you can specify the location of the `tesseract.exe` file.
+# Or do this for windows:
+tesseract_loc = 'C:/Program Files/Tesseract-OCR/tesseract.exe'
+pytesseract.pytesseract.tesseract_cmd = tesseract_loc
+
+```
 
 ## Description <a name="Description"></a>
 
@@ -59,3 +110,12 @@ The custom code written for this project are bundled as a pseudo simulated packa
     -   `COCO_Json`: A list of data.frames and lists that represents a COCO annotation file. This is the file format that COCO annotator would take. Has functions for `import_COCO()`, `export_COCO()`, `split_COCO()`, `merge_COCO()`, `sample_COCO()`, `subset_COCO()`, `wipe_annotations_COCO()`, `update_manual_COCO()`, `set_new_path_COCO()`, `as.parsed_inference()`,`print()`, and `summary()`.
 
 ### File structure <a name="FileStructure"></a>
+
+
+Currently, Git is set to ignore the following directories (mainly due to file size limitations)
+``` bash
+/coco-annotator/datasets
+/graphs
+/invisible
+/detectron2/custom_training
+```
