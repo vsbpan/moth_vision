@@ -3,7 +3,7 @@
 .RData
 .Ruserdata
 .ipynb_checkpoints
-/coco-annotator
+/coco-annotator/datasets
 /graphs
 /invisible
 /detectron2/custom_training
