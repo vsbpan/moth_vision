@@ -6,7 +6,7 @@
 /coco-annotator
 /graphs
 /invisible
-/detectron2
+/detectron2/custom_training
 *.JPG
 *.png
 *.jpg
