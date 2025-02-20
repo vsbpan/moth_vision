@@ -48,7 +48,7 @@ The custom code written for this project are bundled as a pseudo simulated packa
     -   `imlist`: A list of `cimg` or `pixset` objects.
 -   Annotation geometries
     -   `bbox`: Bounding box encoded as a 2 X 2 matrix of lower left and top right corner coordinates. Has generic methods such as `print()`, `area()`, `centroid()`, `as.polygon()`, `as.pixset()`, `IOU()`, `plot()`.
-    -   `polygon`: Polygon encoded as a n X 2 matrix of margin ordinates. This is a more efficient representation of binary masks (`pixset` objects). Has generic methods such as `print()`, `area()`, `centroid()`, `as.bbox()`, `as.pixset()`, `IOU()`, `plot()`.
+    -   `polygon`: Polygon encoded as a n X 2 matrix of margin coordinates. This is a more efficient representation of binary masks (`pixset` objects). Has generic methods such as `print()`, `area()`, `centroid()`, `as.bbox()`, `as.pixset()`, `IOU()`, `plot()`.
     -   `keypoint`: keypoints encoded as n_keypoints X 3 matrix of keypoint coordinates and score or flag. Has generic methods such as `print()`, `plot()`.
 -   Detection instances
     -   `instance`: One instance of object detection composed of a list of annotation geometries, instance_id, image_id, score, and thing_class. Has generic methods such as `print()`, `plot()`.
