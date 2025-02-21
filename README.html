@@ -408,7 +408,7 @@ pip install opencv-contrib-python numpy matplotlib tensorflow pytesseract
 <pre class="bash"><code>cd .
 Call conda activate mothz
 Call jupyter lab</code></pre>
-<p>To do anything with pytasseract</p>
+<p>To do anything with pytasseract,</p>
 <pre class="python"><code># Follow instructions to install tesseract
 # https://github.com/tesseract-ocr/tessdoc/blob/main/Installation.md
 # Find out where `tesseract.exe` is installed. 
@@ -417,6 +417,9 @@ Call jupyter lab</code></pre>
 tesseract_loc = &#39;C:/Program Files/Tesseract-OCR/tesseract.exe&#39;
 pytesseract.pytesseract.tesseract_cmd = tesseract_loc
 </code></pre>
+<p>Some file manipulations may require the <em>ExifTool</em> software
+via the <em>exifr</em> package, but the package would ask you to install
+the program if it cannot be found.</p>
 </div>
 <div id="description" class="section level2">
 <h2>Description <a name="Description"></a></h2>

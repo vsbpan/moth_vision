@@ -31,7 +31,7 @@ In this section, I go over how one would add the new images taken directly from 
 
 #### 1. Image collection
 
-After a photography session (or whenever you are ready), move the folders that contain the new photos to a directory called `C:/moth_photos/input_photos`. If such a directory does not exist, you can initiate the file tree with the code:
+After a photography session (or whenever you are ready), find the new photos (and subdirectories) in `C:/Users/LoPresti Lab/Pictures/new_cannon_photos/` . Move the folders that contain the new photos to a directory called `C:/moth_photos/input_photos`. If such a directory does not exist, you can initiate the file tree with the code:
 
 ```{r}
 init_image_dir(root_path = "C:/")
@@ -56,7 +56,7 @@ Next, you want to check the images in the `moth_photos/pending_merge/` folder fo
 
 #### 3. Merging pending images
 
-Once the images in the `moth_photos/pending_merge/` folder passed the visual validation, we want to merge them to the image database which we went through great lengths to keep clean. Run the code below to do so. When the merging is complete, **a garbage collector would try to wipe the files in the** `moth_photos/input_images/` **and** `moth_photos/pending_merge/`. Every 2000 images will be put into a new sub-directory `moth_photos/database/batch_**`.
+Once the images in the `moth_photos/pending_merge/` folder passed the visual validation, we want to merge them to the image database which we went through great lengths to keep clean. Run the code below to do so. When the merging is complete, **a garbage collector would try to wipe the files in the** `moth_photos/input_images/` **and** `moth_photos/pending_merge/`. Every 2000 images will be put into a new subdirectory `moth_photos/database/batch_**`.
 
 ```{r}
 merge_to_database(root_path = "C:/")

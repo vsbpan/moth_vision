@@ -56,7 +56,7 @@ Call conda activate mothz
 Call jupyter lab
 ```
 
-To do anything with pytasseract
+To do anything with pytasseract,
 
 ``` python
 # Follow instructions to install tesseract
@@ -68,6 +68,9 @@ tesseract_loc = 'C:/Program Files/Tesseract-OCR/tesseract.exe'
 pytesseract.pytesseract.tesseract_cmd = tesseract_loc
 
 ```
+
+Some file manipulations may require the *ExifTool* software via the *exifr* package, but the package would ask you to install the program if it cannot be found. 
+
 
 ## Description <a name="Description"></a>
 
