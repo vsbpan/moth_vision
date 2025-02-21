@@ -7,3 +7,13 @@ fetch_image_database <- function(database_path = paste(pkgload::pkg_path(vmisc::
   }
   database
 }
+
+fetch_exclude_flags <- function(database_path = paste(pkgload::pkg_path(vmisc::fake_pkg()), 
+                                                       "assets/exclude_flags.csv", sep = "/")){
+  database <- try(suppressMessages(read_csv(database_path, 
+                                            progress = FALSE)))
+  if(!isTRUE(is.data.frame(database))){
+    stop("Cannot find exclude flags database!")
+  }
+  database
+}

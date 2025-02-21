@@ -91,6 +91,26 @@ assert_variable_in_df <- function(df, variable){
 }
 
 
+validate_image_dir <- function(root_path = "C:/",
+                               dir_name = "moth_photos",
+                               subdir = c("input_photos", "pending_merge", "database"), 
+                               create = FALSE){
+  dir_path <- get_img_dir_path(root_path, dir_name)
+  subdir_paths <- paste(dir_path, subdir, sep = "/")
+  
+  all_paths <- c(dir_path, subdir_paths)
+  e <- vapply(all_paths, dir.exists, FUN.VALUE = logical(1))
+  missing_dir <- all_paths[!e]
+  
+  if(isFALSE(create) && any(!e)){
+    
+    cli::cli_abort("Missing the follow expected directories: {.file missing_dir}. Try running {.fn init_image_dir()} to create the expected file tree.")
+  } else if(isTRUE(create) && any(!e)){
+    cli::cli_inform("Created missing directories: {.file missing_dir}.")
+    lapply(missing_dir, dir.create)
+  }
+  return(invisible(TRUE))
+}
 
 
 
