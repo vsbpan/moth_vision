@@ -98,7 +98,7 @@ drop_extn <- function(path){
 # Parse file name from a path
 parse_file_name <- function(path, keep_extn = TRUE){
   res <- basename(gsub("\\\\","/", path))
-  if(keep_extn){
+  if(!keep_extn){
     res <- drop_extn(res)
   }
   return(res)
@@ -117,21 +117,25 @@ init_image_dir <- function(root_path = "C:/",
 
 
 get_database_path <- function(root_path = "C:/"){
-  paste(get_img_dir_path(root_path),"database", sep = "/")
+  res <- paste(get_img_dir_path(root_path),"database", sep = "/")
+  remove_dup_slash(res)
 }
 
 
 get_input_path <- function(root_path = "C:/"){
-  paste(get_img_dir_path(root_path),"input_photos", sep = "/")
+  res <- paste(get_img_dir_path(root_path),"input_photos", sep = "/")
+  remove_dup_slash(res)
 }
 
 
 get_pending_path <- function(root_path = "C:/"){
-  paste(get_img_dir_path(root_path),"pending_merge", sep = "/")
+  res <- paste(get_img_dir_path(root_path),"pending_merge", sep = "/")
+  remove_dup_slash(res)
 }
 
 get_img_dir_path <- function(root_path = "C:/", dir_name = "moth_photos"){
-  paste(root_path, dir_name, sep = "/")
+  res <- paste(root_path, dir_name, sep = "/")
+  remove_dup_slash(res)
 }
 
 
@@ -141,21 +145,33 @@ collect_images <- function(root_path = "C:/"){
   input_path <- get_input_path(root_path)
   pending_path <- get_pending_path(root_path)
   
-  existing_files <- list.file(pending_path, pattern = ".jpg", 
+  existing_files <- list.files(pending_path, pattern = ".jpg", 
                               full.names = TRUE, recursive = TRUE, ignore.case = TRUE)
   n_exist <- length(existing_files)
   if(n_exist > 0){
-    cli::cli_abort("{n} image{?s} detected in the directory {.file pending_path}. This is unexpected! Remove those images before rerunning this function.")
+    cli::cli_abort("{n_exist} image{?s} detected in the directory {.file {pending_path}}. This is unexpected! Remove those images before rerunning this function.")
   }
   
   files <- list.files(input_path, pattern = ".JPG", full.names = TRUE, recursive = TRUE, ignore.case = TRUE)
-  file_new_path <- gsub("/","__subdir__",gsub(input_path,"",files))
+  n_files <- length(files)
+  if(n_files == 0){
+    cli::cli_alert_warning("No {.code .jpg} file was found in the directory {.file {input_path}}. Is this expected?")
+  } else {
+    cli::cli_alert_info("{n_files} image{?s} detected in {.file {input_path}}. Attempting to collect the files.")
+  }
+  
+  file_new_path <- gsub("^/","", gsub(input_path,"",files))
+  file_new_path <- paste(pending_path, gsub("/","__subdir__",file_new_path), sep = "/")
+  file_new_path <- remove_dup_slash(file_new_path)
   
   res <- file.copy(files, file_new_path)
   if(!all(res)){
     n <- sum(!res)
-    cli::cli_abort("{n} file{?s} failed to copy. Something is wrong.")
+    cli::cli_abort("{n} file{?s} failed to copy. Something is wrong.
+                   Try to remove the images in {.file {pending_path}} and rerun the function {.fn collect_images}.
+                   If you are seeing this message again, contact admin.")
   }
+  cli::cli_alert_success("Image collection complete! The collected images can be found in {.file {pending_path}}.")
   return(invisible(NULL))
 }
 
@@ -171,7 +187,7 @@ image_in_database <- function(x, root_path = "C:/", quiet = FALSE){
   n <- length(files_matched)
   
   if(isFALSE(quiet) && n > 0){
-    cli::cli_alert_warning("{n} image{?s} in the database match the proposed image: {.file files_matched}")
+    cli::cli_alert_warning("{n} image{?s} in the database match the proposed image: {.file {files_matched}}")
   }
   
   return(any(files_matched))
@@ -205,24 +221,43 @@ merge_to_database <- function(root_path = "C:/"){
   
   
   if(n_pending == 0){
-    cli::cli_inform("There is no image in {.file pending_path} to merge.")
+    cli::cli_inform("There is no image in {.file {pending_path}} to merge.")
     if(n_input != 0){
-      cli::cli_inform("There are {n_input} image{?s} in {.file input_path}. Have you tried to run {.fn collect_images()}?")
+      cli::cli_inform("Found {n_input} image{?s} in {.file {input_path}}. Have you tried to run {.fn collect_images}?")
     }
     return(invisible(NULL))
   }
   
+  # Find the last image_id
   ids <- gsub("img_moth_","", parse_file_name(db_files, keep_extn = FALSE))
   last_id <- max(as.numeric(ids))
   
+  # New file names
   new_ids <- last_id + seq_len(n_pending)
   new_file_names <- sprintf("img_moth_%08d.jpg", new_ids)
-  new_file_paths <- paste(db_path, new_file_names, sep = "/")
   
-  dup <- base::interaction(new_file_names, basename(db_files))
+  subdir_path <- paste(db_path, sprintf("batch_%02d", ceiling(new_ids / 2000)), sep = "/") # 2000 images per folder
+  
+  # Create subdir if it doesn't exist
+  subdir_path %>% 
+    unique() %>% 
+    lapply(function(x){
+    if(!dir.exists(x)){
+      dir.create(x)
+    }
+    return(NULL)
+  })
+  
+  new_file_paths <- paste(subdir_path, new_file_names, sep = "/")
+  
+  # Check for duplicate names in case of overwriting preexisting images
+  dup <- new_file_names[new_file_names %in% basename(db_files)]
   n_dup <- length(dup)
   if(n_dup > 0){
-    cli::cli_abort("There seem to be {n_dup} image files in the database with the same name as the proposed new names. Something is wrong. Contact admin for guidence. Offending entr{?es/ies}: {.file dup}")
+    cli::cli_abort("There seems to be {n_dup} image files in the database with the same name as the proposed new names. Something is wrong. 
+    Contact admin for guidence. 
+    
+    Offending entr{?es/ies}: {.file {dup}}")
   }
   
   
@@ -234,29 +269,85 @@ merge_to_database <- function(root_path = "C:/"){
     pending_files,
     new_file_paths
   )
-  cli::cli_progress_done()
-  cli::cli_progress_cleanup()
+
   
+  # Garbage collector
+  cli::cli_progress_step("Begining garbage collector", 
+                         msg_done = "Done wiping {.file {pending_path}} and {.file {input_path}}!", 
+                         msg_failed = "Error while wiping {.file {pending_path}} and {.file {input_path}}!"
+  )
+  
+  # Check if the pending files are removed
+  pending_files <- list.files(pending_path, 
+                              pattern = ".jpg", 
+                              full.names = TRUE, 
+                              recursive = TRUE, 
+                              ignore.case = TRUE)
+  n_pending <- length(pending_files)
+  
+  if(n_pending > 0){
+    cli::cli_abort("There seems to be {n_pending} image file{?s} left in {.file {pending_path}}. The garbage collector seems to have failed. Try to remove the files in {.file {pending_path}} and start over from {.fn collect_images}.
+                   
+                   If you are seeing this message again, contact admin for guidence. 
+                   
+                   Offending entr{?es/ies}: {.file {basename(pending_files)}}")
+  }
+  
+  # Remove directories and files
   list.dirs(input_path, full.names = TRUE, recursive = FALSE) %>% 
     lapply(dir_remove)
+  list.files(input_path, full.names = TRUE, recursive = TRUE) %>% 
+    file.remove()
+  
+  # Check if the input files are removed
+  input_files <- list.files(input_path, 
+                            pattern = ".jpg", 
+                            full.names = TRUE, 
+                            recursive = TRUE, 
+                            ignore.case = TRUE)
+  n_input <- length(input_files)
+  
+  if(n_input > 0){
+    cli::cli_abort("There seems to be {n_input} image file{?s} left in {.file {input_path}}. The garbage collector seems to have failed. If merging is successful, try to remove the files in {.file {input_path}}, otherwise, start over. 
+                   
+                   If you are seeing this message again, contact admin for guidence. 
+                   
+                   Offending entr{?es/ies}: {.file {basename(input_files)}}")
+  }
+  
+  on.exit({
+    cli::cli_progress_done()
+    cli::cli_progress_cleanup()
+  })
+  
   return(invisible(NULL))
 }
 
 dir_remove <- function(x, recursive = TRUE, force = FALSE) {
   if (unlink(x, recursive, force) == 0)
     return(invisible(TRUE))
-  cli::cli_abort("Failed to remove {.file x}")
+  cli::cli_abort("Failed to remove {.file {x}}")
 }
 
 flag_image_exclude <- function(x){
   db <- fetch_exclude_flags()
+  fn <- basename(x)
+  extns <- tools::file_ext(x)
+  if(any(extns == "")){
+    e <- extns[extns == ""]
+    cli::cli_abort("Missing {length(e)} expected file extension{?s}: {e}")
+  }
   new_d <- data.frame(
-    "file_name" = x
+    "file_name" = fn
   )
   db <- rbind(db, new_d) %>% dplyr::distinct()
   n <- length(x)
   write_path <- eval(as.list(args(fetch_exclude_flags))$database_path)
-  write_csv(db, file = write_path)
+  readr::write_csv(db, file = write_path)
   cli::cli_alert_success("Flagged {n} image{?s} to exclude from database.")
 }
 
+
+remove_dup_slash <- function(x){
+  gsub("//", "/", x)
+}

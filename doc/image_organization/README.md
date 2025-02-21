@@ -31,8 +31,6 @@ In this section, I go over how one would add the new images taken directly from 
 
 #### 1. Image collection
 
-**ADD MORE DETAILS HERE**
-
 After a photography session (or whenever you are ready), move the folders that contain the new photos to a directory called `C:/moth_photos/input_photos`. If such a directory does not exist, you can initiate the file tree with the code:
 
 ```{r}
@@ -41,7 +39,7 @@ init_image_dir(root_path = "C:/")
 
 The root path can be changed from `C:/` to something else with the `root_path` argument.
 
-Run the code below to collect all the photos in a new directory called `C:/moth_photos/pending_merge`. The photos are copied, so if something goes wrong, you still have the `input_photos` to restore your progress.
+Run the code below to collect all the photos in a new directory called `C:/moth_photos/pending_merge`. The photos are copied, so if something goes wrong, you still have the `moth_photos/input_photos` to restore your progress.
 
 ```{r}
 collect_images(root_path = "C:/")
@@ -49,22 +47,24 @@ collect_images(root_path = "C:/")
 
 #### 2. Image validation
 
-Next, you want to check the images in the `pending_merge/` folder for any obvious errors and remove those images. Generally, we want to:
+Next, you want to check the images in the `moth_photos/pending_merge/` folder for any obvious errors and remove those images. Generally, we want to:
 
 1.  Remove duplicate images. Keep the best one for each specimen.
 2.  Remove photos without moths.
 3.  Remove corrupted images.
-4.  Fix the orientation of the images such that the moth is oriented up right (forewings above hindwings). If the moth is not oriented upright in the photo, prioritize keeping the text of the tags oriented correctly, otherwise the text recognition would fail. It is also good to keep the color check upright with the ruler at the bottom.
+4.  Fix the orientation of the images such that the moth is oriented up right (forewings above hindwings). If the moth is not oriented upright in the photo, prioritize keeping the text of the tags oriented correctly, otherwise the text recognition would fail. It is also good to keep the color checker upright with the ruler at the bottom.
 
 #### 3. Merging pending images
 
-Once the images in the `pending_merge/` folder passed the visual validation, we want to merge them to the image database which we went through great lengths to keep clean. Run the code below to do so. When the merging is complete, **a garbage collector would try to wipe the files in the `input_images/` and `pending_merge/`**. There is currently no checks implemented to check if you are merging duplicate images due to computation limitations, so be careful not to merge a set of images multiple times! Contact Vincent for code to check if an image has already been entered in the database or run `image_in_database("MY_IMG_FILE_PATH",root_path = "C:/", quiet = FALSE)`.
+Once the images in the `moth_photos/pending_merge/` folder passed the visual validation, we want to merge them to the image database which we went through great lengths to keep clean. Run the code below to do so. When the merging is complete, **a garbage collector would try to wipe the files in the** `moth_photos/input_images/` **and** `moth_photos/pending_merge/`. Every 2000 images will be put into a new sub-directory `moth_photos/database/batch_**`.
 
 ```{r}
 merge_to_database(root_path = "C:/")
 ```
 
-#### 4. Image registration
+There is currently no checks implemented to check if you are merging duplicate images due to computation limitations, so be careful not to merge a set of images multiple times! Contact Vincent for code to check if an image has already been entered in the database or run `image_in_database("MY_IMG_FILE_PATH",root_path = "C:/", quiet = FALSE)`.
+
+#### 4. Image registration (optional)
 
 When new images are added to the database, we need to register the image file names so that a unique image_id is assigned to each new file name. The reason is that annotation files need to have integer numbers as the identifier and we want to keep track of which image got annotated how. **Unless you are dealing with annotation files, there is no need to run this code.** If you do, you have to remember to push your changes to the repository so that subsequent registrations on other machines do not conflict with the new registrations you made.
 

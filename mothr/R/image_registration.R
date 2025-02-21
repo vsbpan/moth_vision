@@ -50,7 +50,7 @@ check_image_registration <- function(path, register = FALSE, quiet = FALSE){
 register_image_id <- function(path){
   write_path <- eval(as.list(args(fetch_image_database))$database_path)
   check_image_registration(path, register = TRUE) %>% 
-    write_csv(file = write_path)
+    readr::write_csv(file = write_path)
   cli::cli_alert_success("Images registered!")
 }
 

@@ -62,7 +62,7 @@ validate_evaluator_input <- function(predictions, ground_truths){
   ground_truths_inl <- ground_truths$inlist
   
   if(length(predictions_inl) != nrow(ground_truths)){
-    cli::cli_abort("{.var predictions} and {.var ground_truths_inl} must be the same length! Something is wrong in {.code validate_evaluator_input()}")
+    cli::cli_abort("{.var predictions} and {.var ground_truths_inl} must be the same length! Something is wrong in {.fn validate_evaluator_input}")
   }
   
   if(!all(do.call("c",lapply(predictions_inl, is.inlist)))){
@@ -97,16 +97,16 @@ validate_image_dir <- function(root_path = "C:/",
                                create = FALSE){
   dir_path <- get_img_dir_path(root_path, dir_name)
   subdir_paths <- paste(dir_path, subdir, sep = "/")
+  subdir_paths <- remove_dup_slash(subdir_paths)
   
   all_paths <- c(dir_path, subdir_paths)
   e <- vapply(all_paths, dir.exists, FUN.VALUE = logical(1))
   missing_dir <- all_paths[!e]
   
   if(isFALSE(create) && any(!e)){
-    
-    cli::cli_abort("Missing the follow expected directories: {.file missing_dir}. Try running {.fn init_image_dir()} to create the expected file tree.")
+    cli::cli_abort("Missing the following expected directories: {.file {missing_dir}}. Try running {.fn init_image_dir} to create the expected file tree.")
   } else if(isTRUE(create) && any(!e)){
-    cli::cli_inform("Created missing directories: {.file missing_dir}.")
+    cli::cli_inform("Created missing directories: {.file {missing_dir}}.")
     lapply(missing_dir, dir.create)
   }
   return(invisible(TRUE))
