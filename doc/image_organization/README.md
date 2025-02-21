@@ -87,7 +87,7 @@ check_image_registration(path_to_new_files)
 
 ### Removing images from the database
 
-Removing images from the database should be fairly straightforward. You can simply delete the image from the database, but note that when backing up the database, if the delete file already exist in the folder you backup into, the deleted images will remain. This is probably a good thing anyway.
+Removing images from the database should be fairly straightforward. You can simply delete the image from the database, but note that when backing up the database, if the deleted file already exists in the folder you backup into, the deleted images will remain. This is probably a good thing anyway.
 
 A better way to remove images from analysis / computer vision pipeline is to flag the image as exclude. The code below appends a csv file that stores the file name of all the excluded files.
 
