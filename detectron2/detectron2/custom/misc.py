@@ -151,6 +151,8 @@ class CustomTrainer(DefaultTrainer):
 def filter_instance_by_classes(instances, meta_data, k):
     o = instances["instances"].to("cpu")
     things_classes = MetadataCatalog.get(meta_data).get("thing_classes")
+    if(len(o.pred_classes.tolist()) < 1): 
+      return o
     things_predicted = [things_classes[i] for i in o.pred_classes.tolist()]
     things_scores = o.scores.tolist()
     top_indices = []
