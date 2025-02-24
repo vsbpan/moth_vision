@@ -11,6 +11,14 @@ as.instance <- function(x, ...){
   UseMethod("as.instance")
 }
 
+find_things <- function(x, ...){
+  UseMethod("find_things")
+}
+
+find_labels <- function(x, ...){
+  UseMethod("find_labels")
+}
+
 as.parsed_inference <- function(x, ...){
   UseMethod("as.parsed_inference")
 }
@@ -46,6 +54,14 @@ registerS3method(genname = "IOU",
 registerS3method(genname = "IOU", 
                  class = "bbox", 
                  method = IOU.bbox)
+
+registerS3method(genname = "as.bbox", 
+                 class = "inlist", 
+                 method = as.bbox.inlist)
+
+registerS3method(genname = "as.bbox", 
+                 class = "instance", 
+                 method = as.bbox.instance)
 
 registerS3method(genname = "as.bbox", 
                  class = "polygon", 
@@ -122,6 +138,22 @@ registerS3method(genname = "as.instance",
 registerS3method(genname = "as.inlist", 
                  class = "list", 
                  method = as.inlist.list)
+
+registerS3method(genname = "find_things", 
+                 class = "inlist", 
+                 method = find_things.inlist)
+
+registerS3method(genname = "find_things", 
+                 class = "instance", 
+                 method = find_things.instance)
+
+registerS3method(genname = "find_labels", 
+                 class = "inlist", 
+                 method = find_labels.inlist)
+
+registerS3method(genname = "find_labels", 
+                 class = "instance", 
+                 method = find_labels.instance)
 
 registerS3method(genname = "as.Json", 
                  class = "list", 

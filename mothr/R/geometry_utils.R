@@ -186,3 +186,43 @@ as.polygon.bbox <- function(x){
   return(abs(area) / 2)
 }
 
+
+as.bbox.instance <- function(x, ...){
+  x$bbox
+}
+
+as.bbox.inlist <- function(x, ...){
+  res <- purrr::map(x, "bbox") %>% do.call("rbind", .)
+  as.bbox.polygon(res)
+}
+
+
+shrink_bbox <- function(x, shrink, ...){
+  round(x/shrink)
+}
+
+bbox_crop <- function(img, bbox){
+  stopifnot(imager::is.cimg(img) | imager::is.pixset(img))
+  
+  if(missing(bbox)){
+    cli::cli_abort("{.var bbox} is missing with no default.")
+  }
+  x_range <- bbox[,"x", drop = TRUE]
+  y_range <- bbox[,"y", drop = TRUE]
+  
+  x_inrange <- all(is.between(x_range, c(1, ncol(img)),inclusive = TRUE))
+  y_inrange <- all(is.between(y_range, c(1, nrow(img)),inclusive = TRUE))
+  
+  if(!x_inrange && !y_inrange){
+    cli::cli_abort(c("Bounding box has range outside of the image!",
+                     "Image x dim from {.val {1}} to {.val {ncol(img)}}", 
+                     "bbox x dim from {.val {min(x_range)}} to {.val {max(x_range)}}",
+                     "Image y dim from {.val {1}} to {.val {nrow(img)}}", 
+                     "bbox y dim from {.val {min(y_range)}} to {.val {max(y_range)}}"
+    ))
+  }
+  
+  img[vmisc::seq_interval(x_range, by = 1),
+      vmisc::seq_interval(y_range, by = 1),
+      ,, drop = FALSE]
+}

@@ -23,17 +23,50 @@ c(
   parsed_mask$inlist$img100000,
   parsed_kp$inlist$img100000
 ) %>% 
-  plot(shrink = 4)
+  plot(shrink = 4, bbox_moth = TRUE)
 
 
 parsed_full <- merge_parsed_inference(parsed_mask, parsed_kp)
 
 
 plot(imfill(dim = c(1500, 1000, 1, 1)))
-plot(parsed_full$inlist[[6]], shrink = 4)
+plot(parsed_full$inlist[[6]], shrink = 4, bbox = TRUE)
 
 parsed_full$inlist[[5]]
 parsed_full$tag_id_guess
+
+
+
+parsed_full$inlist[[6]] %>% moth_bbox() %>% plot()
+
+parsed_full$inlist[[6]] %>% moth_bbox() %>% plot(shrink = 4)
+
+
+
+img <- imfill(dim = c(1500, 1000, 1, 1))
+
+bbox_crop(img, parsed_full$inlist[[6]] %>% moth_bbox() %>% shrink_bbox(shrink = 4))
+
+
+
+
+
+
+
+
+
+img <- fast_load_image(parsed_full$path[1])
+
+plot(img)
+
+
+
+parsed_full$inlist[[1]] %>% plot(bbox_moth = TRUE)
+
+
+bbox_crop(img, moth_bbox(parsed_full$inlist[[1]])) %>% plot()
+
+
 
 
 

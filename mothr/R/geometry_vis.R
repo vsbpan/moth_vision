@@ -22,13 +22,13 @@ plot.keypoints <- function(x,
   points(x = x_coord, y = y_coord, col = col, pch = pch, ...)
 }
 
-plot.polygon <- function(x, col = "green", alpha = 0.5, shrink = 1, ...){
+plot.polygon <- function(x, col = "green", alpha = 0.5, shrink = 1, border = NA, ...){
   col <- grDevices::adjustcolor(col = col, alpha.f = alpha)
   x <- x / shrink
   if(is.null(x)){
     cli::cli_alert_danger("No polygon detected!")
   } else {
-    x %>% polygon(col = col, ...)
+    x %>% polygon(col = col, border = border, ...)
   }
 }
 
@@ -54,6 +54,7 @@ plot.instance <- function(x,
                           bbox = FALSE,
                           mask_col = "green",
                           mask_alpha = 0.5,
+                          mask_border = NA,
                           kp_name = rownames(x$keypoints), 
                           kp_col = colorpal(nrow(x$keypoints)), 
                           kp_pch = 19,
@@ -65,7 +66,7 @@ plot.instance <- function(x,
     plot(x$bbox, fill = bbox_fill, col = bbox_col, shrink = shrink)
   }
   if(has_mask(x)){
-    plot(x$polygon, col = mask_col, alpha = mask_alpha, shrink = shrink)
+    plot(x$polygon, col = mask_col, alpha = mask_alpha, border = mask_border, shrink = shrink)
   }
   if(has_keypoints(x)){
     plot(x$keypoints, kp_name = kp_name, pch = kp_pch, col = kp_col, shrink = shrink)
@@ -75,10 +76,14 @@ plot.instance <- function(x,
 
 plot.inlist <- function(x, 
                         bbox = FALSE,
+                        bbox_moth = FALSE,
                         mask_alpha = 0.5,
+                        mask_border = NA,
                         kp_pch = 19,
                         bbox_col = "red",
                         bbox_fill = "#00000000",
+                        bbox_moth_col = "yellow",
+                        bbox_moth_fill = "#00000000",
                         shrink = 1,
                         ...){
   
@@ -89,6 +94,7 @@ plot.inlist <- function(x,
          bbox = bbox,
          mask_col = match_category_color(thing),
          mask_alpha = mask_alpha,
+         mask_border = mask_border,
          kp_name = rownames(x$keypoints), 
          kp_col = match_keypoint_color(thing)[[1]], 
          kp_pch = kp_pch,
@@ -96,6 +102,10 @@ plot.inlist <- function(x,
          bbox_fill = bbox_fill,
          shrink = shrink,
          ...)
+  }
+  
+  if(isTRUE(bbox_moth)){
+    plot(moth_bbox(x), shrink = shrink, col = bbox_moth_col, fill = bbox_moth_fill)
   }
   
   return(invisible(NULL))

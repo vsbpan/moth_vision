@@ -1,7 +1,7 @@
 # Wrapper for computing challenge metrics for binary masks using the polygons. Prove a list of inlist for each prediction and ground truth
 mask_evaluator <- function(predictions, ground_truths, 
                            thresh = c(0.5, 0.75, 0.9), 
-                           categories = c("body", "forewing", "hindwing", 
+                           things = c("body", "forewing", "hindwing", 
                                           "color_checker","ruler", "tag"),
                            cores = 1,
                            use_bbox = FALSE){
@@ -12,7 +12,7 @@ mask_evaluator <- function(predictions, ground_truths,
                             function(i, pred_l, gt_l){
                               mask_evaluator_engine(
                                 pred_l[[i]],gt_l[[i]], 
-                                categories = categories,
+                                things = things,
                                 use_bbox = use_bbox
                               )
   }, 
@@ -24,17 +24,17 @@ mask_evaluator <- function(predictions, ground_truths,
   
   out <- .evaluator_calc(z, thresh, thresh_name = "IOU")
   type <- if(use_bbox) "bbox" else "mask"
-  .evaluator_report(out, l$pred, categories, type)
+  .evaluator_report(out, l$pred, things, type)
   invisible(out)
 }
 
-.evaluator_report <- function(calc_out, validated_pred, categories, type){
+.evaluator_report <- function(calc_out, validated_pred, things, type){
   nanno <- calc_out$n[1]
   nimg <- length(validated_pred)
   type <- cli::col_blue(type)
   
   has_things <- unname(unique(unlist(purrr::map_depth(validated_pred, 2, "thing_class"))))
-  things <- categories[categories %in% has_things]
+  things <- things[things %in% has_things]
   things <- cli::col_yellow(things)
   
   cat(cli::cli_text("COCO {type} evaluation for {nanno} annotation{?s} across {nimg} image{?s}."))
@@ -46,19 +46,19 @@ mask_evaluator <- function(predictions, ground_truths,
 
 bbox_evaluator <- function(prediction_list, ground_truth_list, 
                            thresh = c(0.5, 0.75, 0.9), 
-                           categories = c("body", "forewing", "hindwing", 
+                           things = c("body", "forewing", "hindwing", 
                                           "color_checker","ruler", "tag"),
                            cores = 1){
   mask_evaluator(prediction_list, ground_truth_list, 
                  thresh = thresh, 
-                 categories = categories,
+                 things = things,
                  cores = cores,
                  use_bbox = TRUE)
 }
 
 # Mask evaluator for a single inlist. Output the iou outcomes
 mask_evaluator_engine <- function(prediction, ground_truth, 
-                                  categories = c("body", "forewing", "hindwing", 
+                                  things = c("body", "forewing", "hindwing", 
                                                  "color_checker","ruler", "tag"), 
                                   use_bbox = FALSE){
   
@@ -66,12 +66,12 @@ mask_evaluator_engine <- function(prediction, ground_truth,
   prediction <- prediction[o]
   geom <- if(use_bbox) "bbox" else "polygon"
   
-  out_list <- vector(mode = "list", length = length(categories))
+  out_list <- vector(mode = "list", length = length(things))
   
-  for (i in seq_along(categories)){
-    cati <- categories[i]
-    pred_classi <- select_category(prediction, cati)
-    gt_classi <- select_category(ground_truth, cati)
+  for (i in seq_along(things)){
+    cati <- things[i]
+    pred_classi <- select_things(prediction, cati)
+    gt_classi <- select_things(ground_truth, cati)
     
     n_predi <- length(pred_classi)
     n_gti <- length(gt_classi)
@@ -81,11 +81,11 @@ mask_evaluator_engine <- function(prediction, ground_truth,
       next
     } else if(n_predi == 0){
       out_list[[i]] <- rep("False_negative", n_gti)
-      names(out_list)[i] <- categories[i]
+      names(out_list)[i] <- things[i]
       next
     } else if(n_gti == 0){
       out_list[[i]] <- rep("False_positive", n_predi)
-      names(out_list)[i] <- categories[i]
+      names(out_list)[i] <- things[i]
       next
     }
     
@@ -121,7 +121,7 @@ mask_evaluator_engine <- function(prediction, ground_truth,
       }
     }) %>% 
       do.call("c", .)
-    names(out_list)[i] <- categories[i]
+    names(out_list)[i] <- things[i]
   }
   out_list <- purrr::keep(out_list, function(x){!is.null(x)})
   return(out_list)
@@ -212,7 +212,7 @@ mask_evaluator_engine <- function(prediction, ground_truth,
 # Wrapper for computing challenge metrics for keypoints. Prove a list of inlist for each prediction and ground truth
 keypoint_evaluator <- function(predictions, ground_truths, 
                                k = c(5, 5), # From visually assessing a sample whether this is reliable for distinguishing false positive and true positive.
-                               categories = "forewing",
+                               things = "forewing",
                                keypoints = c("inner", "outer"), 
                                thresh = c(0.5, 0.75, 0.9),
                                cores = 1){
@@ -236,7 +236,7 @@ keypoint_evaluator <- function(predictions, ground_truths,
                             function(i, pred_l, gt_l){
                               keypoint_evaluator_engine(
                                 pred_l[[i]],gt_l[[i]], 
-                                categories = categories,
+                                things = things,
                                 keypoints = keypoints,
                                 k = k
                               )
@@ -248,25 +248,25 @@ keypoint_evaluator <- function(predictions, ground_truths,
     unlist(TRUE, FALSE)
   
   out <- .evaluator_calc(z, thresh, thresh_name = "OKS")
-  .evaluator_report(out, l$pred, categories, "keypoint")
+  .evaluator_report(out, l$pred, things, "keypoint")
   invisible(out)
 }
 
 # keypoint evaluator for a single inlist. Output the oks outcomes
 keypoint_evaluator_engine <- function(prediction, ground_truth, 
-                                      categories = c("forewing"),
+                                      things = c("forewing"),
                                       keypoints = c("inner", "outer"),
                                       k = c(5, 5)){
   
   o <- order(do.call("c",map(prediction, "score")))
   prediction <- prediction[o]
   
-  out_list <- vector(mode = "list", length = length(categories))
+  out_list <- vector(mode = "list", length = length(things))
   
-  for (i in seq_along(categories)){
-    cati <- categories[i]
-    pred_classi <- select_category(prediction, cati)
-    gt_classi <- select_category(ground_truth, cati)
+  for (i in seq_along(things)){
+    cati <- things[i]
+    pred_classi <- select_things(prediction, cati)
+    gt_classi <- select_things(ground_truth, cati)
     
     n_predi <- length(pred_classi)
     n_gti <- length(gt_classi)
@@ -276,11 +276,11 @@ keypoint_evaluator_engine <- function(prediction, ground_truth,
       next
     } else if(n_predi == 0){
       out_list[[i]] <- rep("False_negative", n_gti)
-      names(out_list)[i] <- categories[i]
+      names(out_list)[i] <- things[i]
       next
     } else if(n_gti == 0){
       out_list[[i]] <- rep("False_positive", n_predi)
-      names(out_list)[i] <- categories[i]
+      names(out_list)[i] <- things[i]
       next
     }
     
@@ -319,7 +319,7 @@ keypoint_evaluator_engine <- function(prediction, ground_truth,
       }
     }) %>% 
       do.call("c", .)
-    names(out_list)[i] <- categories[i]
+    names(out_list)[i] <- things[i]
   }
   out_list <- purrr::keep(out_list, function(x){!is.null(x)})
   return(out_list)

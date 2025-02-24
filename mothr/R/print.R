@@ -30,10 +30,10 @@ print.COCO_Json <- function(x, ...){
 
 print.inlist <- function(x, ...){
   n_instances <- length(x)
-  anno_types <- lapply(x, find_labels) %>% do.call("c",.) %>% unique()
+  anno_types <- find_labels(x)
   anno_types <- cli::col_blue(anno_types)
   image_ids <- lapply(x, function(x){x$image_id}) %>% do.call("c",.) %>% unique()
-  things <- lapply(x, function(x){x$thing_class}) %>% do.call("c",.) %>% unique()
+  things <- find_things(x)
   things <- cli::col_yellow(things)
   n_img <- length(image_ids)
   if(n_img != 1L){
@@ -56,7 +56,7 @@ print.instance <- function(x, ...){
   
   anno_types <- find_labels(x)
   anno_types <- cli::col_blue(anno_types)
-  thing <- cli::col_yellow(x$thing_class)
+  thing <- cli::col_yellow(find_things(x))
   score <- cli::col_grey(format(round(x$score, 2), nsmall = 2))
   w <- cli::console_width() * 0.7
   r1 <- c(sprintf("imageID: %s", image_id), sprintf("instanceID: %s", instance_id))

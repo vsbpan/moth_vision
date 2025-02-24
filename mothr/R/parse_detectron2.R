@@ -71,7 +71,7 @@ parse_bbox_vec <- function(x){
   out <- apply(out, 2, sort, simplify = TRUE)
   
   class(out) <- c("bbox", "matrix", "array")
-  return(out)
+  return(round(out, digits = 0))
 }
 
 # Parse coco annotation format segmentation coordinates
@@ -122,70 +122,6 @@ import_raw_inference <- function(path_meta, path_inference){
   return(out)
 }
 
-
-as.instance.list <- function(x){
-  stopifnot(is.list(x))
-  # Maybe add more stuff here
-  class(x) <- c("instance", "list")
-  x
-}
-
-as.inlist.list <- function(x){
-  stopifnot(is.list(x))
-  test <- vapply(x, is.instance, logical(1))
-  if(any(!test)){
-    o <- unique(do.all("c", lapply(x[!test], class)))
-    cli::cli_abort("An object of class {.cls inlist} must be a list of {.cls instance} objects. Offending classes: {.cls o}")
-  }
-  class(x) <- c("inlist", "list")
-  x
-}
-
-c.inlist <- function(x, ...){
-  args <- lapply(as.list(substitute(list(...)))[-1L], 
-                 function(x){
-                   eval(x, envir = parent.frame(3))
-                 })
-  class(x) <- c("list")
-  out <- c(x, unlist(args, recursive = FALSE))
-  class(out) <- c("inlist", "list")
-  return(out)
-}
-
-`[.inlist` <- function(x, ...){
-  args <- lapply(as.list(substitute(list(...)))[-1L], 
-                 function(x){
-                   eval(x, envir = parent.frame(3))
-                 })
-  class(x) <- c("list")
-  out <- do.call("[", c(list(x), args))
-  class(out) <- c("inlist", "list")
-  return(out)
-}
-
-
-inlist <- function(x, ...){
-  args <- lapply(as.list(substitute(list(...)))[-1L], 
-                 function(x){
-                   eval(x, envir = parent.frame(3))
-                 })
-  class(x) <- c("list")
-  out <- list(x, unlist(args, recursive = FALSE))
-  class(out) <- c("inlist", "list")
-  return(out)
-}
-
-find_labels <- function(x){
-  base::intersect(c("bbox","polygon","keypoints"), names(x))
-}
-
-select_category <- function(x, categories = c("body", "forewing", "hindwing", "color_checker",
-                                              "ruler", "tag")){
-  categories <- match.arg(categories, several.ok = TRUE)
-  
-  cats <- do.call("c",purrr::map(x, "thing_class"))
-  x[cats %in% categories]
-}
 
 
 as.parsed_inference.raw_inference <- function(x){
@@ -426,4 +362,7 @@ parse_tag_text <- function(x){
   x <- stringr::str_trim(x)
   return(x)
 }
+
+
+
 

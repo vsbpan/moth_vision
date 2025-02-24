@@ -13,3 +13,7 @@
 *.jpeg
 *.tif
 *.bat
+inference/all_batches_image_meta_mask.csv
+inference/all_batches_inference_mask.csv
+inference/all_batches_image_meta_keypoint.csv
+inference/all_batches_inference_keypoint.csv
