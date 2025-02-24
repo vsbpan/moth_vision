@@ -20,5 +20,7 @@ parsed_full <- merge_parsed_inference(parsed_mask, parsed_kp)
 parsed_full
 
 
+saveRDS(parsed_full, "cleaned_data/parsed_full.rds")
+
 
 
