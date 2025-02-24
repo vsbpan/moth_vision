@@ -2,6 +2,10 @@ is.raw_inference <- function(x){
   inherits(x, "raw_inference")
 }
 
+is_empty_instance <- function(x){
+  all(is.na(find_things(x)))
+}
+
 # Check if path is relative to current working directory
 is_relative_path <- function(x){
   !grepl(getwd(), x)

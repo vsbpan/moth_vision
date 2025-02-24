@@ -102,6 +102,11 @@ format_categories_COCO <- function(df){
     dplyr::group_by(file_name) %>% 
     dplyr::tally()
   
+  # This can be wrong for empty placeholders. Need to fix later with is_empty_instance()
+  tally_d <- left_join(df_meta %>% dplyr::select(file_name), tally_d, by = "file_name") %>% 
+    dplyr::mutate(n = ifelse(is.na(n), 0, n))
+  
+  
   # Sort tally_d by df_meta
   tally_d <- tally_d[match(tally_d$file_name,df_meta$file_name),]
   

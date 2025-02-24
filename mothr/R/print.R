@@ -36,10 +36,11 @@ print.inlist <- function(x, ...){
   things <- find_things(x)
   things <- cli::col_yellow(things)
   n_img <- length(image_ids)
+  n_empty <- lapply(x, is_empty_instance) %>% do.call("sum", .)
   if(n_img != 1L){
     cli::cli_warn("There are {n_img} unique image{?s} in the object {.var x}. Is this expected?")
   }
-  r1 <- sprintf("%s instances in imageID: %s", n_instances, paste0(image_ids, collapse = ", "))
+  r1 <- sprintf("%s instances in imageID: %s", n_instances - n_empty, paste0(image_ids, collapse = ", "))
   w <- cli::console_width() * 0.7
   
   cat(cli::cli_text("Instance list"))

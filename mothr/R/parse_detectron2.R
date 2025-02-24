@@ -7,6 +7,8 @@ parse_pylist <- function(x, coerce = as.numeric, simplify = TRUE){
       coerce(x)
     })
   
+  out[is.na(x)] <- list(NULL)
+  
   if(simplify){
     out <- do.call("rbind",out)
     
@@ -50,6 +52,9 @@ split_n_steps <- function(x, n, name = paste0("x", seq_len(n))){
 
 # Turn a vector of keypoint values into a matrix
 parse_keypoints_vec <- function(x){
+  if(is.null(x)){
+    return(NULL)
+  }
   out <- split_n_steps(x, 3L, name = c("x","y","score"))
   class(out) <- c("keypoints", "matrix", "array")
   return(out)
@@ -57,7 +62,9 @@ parse_keypoints_vec <- function(x){
 
 # Turn vector of bbox values into a matrix
 parse_bbox_vec <- function(x){
- 
+  if(is.null(x)){
+    return(NULL)
+  }
   out <- split_n_steps(x, 2L, name = c("x","y"))
   
   nr <- nrow(out)
@@ -77,6 +84,9 @@ parse_bbox_vec <- function(x){
 # Parse coco annotation format segmentation coordinates
 parse_polygon_vec <- function(x){
   foo <- function(x){
+    if(is.null(x)){
+      return(NULL)
+    }
     poly1 <- split_n_steps(x, n = 2L, name = c("x","y"))
     poly1 <- unique(poly1)
     poly1 <- validate_polygon(poly1)
@@ -125,7 +135,13 @@ import_raw_inference <- function(path_meta, path_inference){
 
 
 as.parsed_inference.raw_inference <- function(x){
+  cli::cli_progress_step("Initiating", msg_done = "Initiation complete.", msg_failed = "Initiation failed.")
+  
   stopifnot(is.raw_inference(x))
+  
+  cli::cli_progress_step("Formating image metadata", 
+                         msg_done = "Image metadata formatting complete.", 
+                         msg_failed = "Image metadata formatting failed.")
   img_meta <- .format_images_engine(x$meta, x$inference)
   
   img_meta <- img_meta %>% 
@@ -146,6 +162,10 @@ as.parsed_inference.raw_inference <- function(x){
     img_meta$tag_text <- parse_pylist(x$meta$tag_text, as.character, simplify = FALSE) %>% 
       lapply(parse_tag_text)
   }
+  
+  cli::cli_progress_step("Formating instance metadata and bbox", 
+                         msg_done = "Instance metadata and bbox formatting complete.", 
+                         msg_failed = "Instance metadata and bbox formatting failed.")
   
   x$inference <- x$inference %>% 
     dplyr::group_by(file_name) %>% 
@@ -170,6 +190,9 @@ as.parsed_inference.raw_inference <- function(x){
   )
   
   if(has_mask(x$inference)){
+    cli::cli_progress_step("Formating polygons", 
+                           msg_done = "Polygon formatting complete.", 
+                           msg_failed = "Polygon formatting failed.")
     master_list <- c(
       master_list,
       list(
@@ -179,6 +202,9 @@ as.parsed_inference.raw_inference <- function(x){
     )
   }
   if(has_keypoints(x$inference)){
+    cli::cli_progress_step("Formating keypoints", 
+                           msg_done = "Keypoint formatting complete.", 
+                           msg_failed = "Keypoint formatting failed.")
     master_list <- c(
       master_list,
       list(
@@ -195,6 +221,10 @@ as.parsed_inference.raw_inference <- function(x){
       )
     )
   }
+  cli::cli_progress_step("Collecting parsed results", 
+                         msg_done = "Parsed results collection complete.", 
+                         msg_failed = "Parsed results collection failed.")
+  
   master_list <- lapply( 
     seq_len(nrow(x$inference)),
     function(i){
@@ -216,6 +246,14 @@ as.parsed_inference.raw_inference <- function(x){
   }) %>% 
     setNames(img_id2)
   img_meta <- as.parsed_inference(img_meta)
+  img_meta$empty_instance <- do.call("c", lapply(img_meta$inlist, is_empty_instance))
+  img_meta$num_annotations <- ifelse(img_meta$empty_instance,0,img_meta$num_annotations)
+  
+  on.exit({
+    cli::cli_progress_done()
+    cli::cli_progress_cleanup()
+  })
+  
   return(img_meta)
 }
 
@@ -305,11 +343,11 @@ merge_parsed_inference <- function(mask_df, kp_df){
   mask_df_name <- deparse(substitute(mask_df))
   kp_df_name <- deparse(substitute(kp_df))
   if(!is.parsed_inference(mask_df)){
-    cli::cli_abort("{.var mask_df_name} must be of class {.cls parsed_inference}")
+    cli::cli_abort("{.var {mask_df_name}} must be of class {.cls parsed_inference}")
   }
   
   if(!is.parsed_inference(kp_df)){
-    cli::cli_abort("{.var kp_df_name} must be of class {.cls parsed_inference}")
+    cli::cli_abort("{.var {kp_df_name}} must be of class {.cls parsed_inference}")
   }
   
   assert_variable_in_df(mask_df, c("inlist", "id"))
@@ -321,7 +359,7 @@ merge_parsed_inference <- function(mask_df, kp_df){
   matched <- matched[!is.na(matched)]
   n_new <- length(matched)
   
-  cli::cli_alert_info("{n_new} of {n_og} images in {.var mask_df_name} found in {.var kp_df_name} of {n_kp} images.")
+  cli::cli_alert_info("{n_new} of {n_og} images in {.var {mask_df_name}} found in {.var {kp_df_name}} of {n_kp} images.")
   mask_df <- mask_df[matched, ,drop = FALSE]
   
   
@@ -330,11 +368,11 @@ merge_parsed_inference <- function(mask_df, kp_df){
   
   
   if(!all(do.call("c",lapply(mask_inl, is.inlist)))){
-    cli::cli_abort("{.var mask_df_name} must have a column for a list of {.cls inlist}")
+    cli::cli_abort("{.var {mask_df_name}} must have a column for a list of {.cls inlist}")
   }
   
   if(!all(do.call("c",lapply(kp_inl, is.inlist)))){
-    cli::cli_abort("{.var kp_df_name} must have a column for a list of {.cls inlist}")
+    cli::cli_abort("{.var {kp_df_name}} must have a column for a list of {.cls inlist}")
   }
   
   mask_df$inlist <- purrr::map2(mask_inl, kp_inl, function(x,y){
