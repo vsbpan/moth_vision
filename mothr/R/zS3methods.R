@@ -43,6 +43,30 @@ IOU <- function(x, ...){
   UseMethod("IOU")
 }
 
+refind_coords <- function(x, ...){
+  UseMethod("refind_coords")
+}
+
+as_relative <- function(x, ...){
+  UseMethod("as_relative")
+}
+
+registerS3method(genname = "refind_coords", 
+                 class = "default", 
+                 method = refind_coords.default)
+
+registerS3method(genname = "as_relative", 
+                 class = "inlist", 
+                 method = as_relative.inlist)
+
+registerS3method(genname = "as_relative", 
+                 class = "instance", 
+                 method = as_relative.instance)
+
+# registerS3method(genname = "as_relative", 
+#                  class = "default", 
+#                  method = as_relative.default)
+
 registerS3method(genname = "IOU", 
                  class = "polygon", 
                  method = IOU.polygon)

@@ -55,3 +55,7 @@ has_mask <- function(df){
 has_bbox <- function(df){
   "bbox" %in% names(df)
 }
+
+is_relative <- function(x){
+  !is.null(attr(x, "offset"))
+}

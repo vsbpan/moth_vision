@@ -29,6 +29,8 @@ print.COCO_Json <- function(x, ...){
 
 
 print.inlist <- function(x, ...){
+  offset <- vmisc::null_to_NA(attr(x, "offset"))
+  offset <- sprintf("(%s, %s)", offset[1], offset[2])
   n_instances <- length(x)
   anno_types <- find_labels(x)
   anno_types <- cli::col_blue(anno_types)
@@ -48,13 +50,15 @@ print.inlist <- function(x, ...){
   cat("\n")
   cat(cli::cli_text("things: {things}"))
   cat(cli::cli_text("labels: {anno_types}"))
+  cat(cli::cli_text("offset: {offset}"))
   return(invisible(NULL))
 }
 
 print.instance <- function(x, ...){
   instance_id <- x$instance_id
   image_id <- x$image_id
-  
+  offset <- vmisc::null_to_NA(attr(x, "offset"))
+  offset <- sprintf("(%s, %s)", offset[1], offset[2])
   anno_types <- find_labels(x)
   anno_types <- cli::col_blue(anno_types)
   thing <- cli::col_yellow(find_things(x))
@@ -66,6 +70,7 @@ print.instance <- function(x, ...){
   cat("\n")
   cat(cli::cli_text("thing: {thing} ({score})"))
   cat(cli::cli_text("labels: {anno_types}"))
+  cat(cli::cli_text("offset: {offset}"))
   return(invisible(NULL))
 }
 

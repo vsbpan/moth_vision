@@ -226,3 +226,25 @@ bbox_crop <- function(img, bbox){
       vmisc::seq_interval(y_range, by = 1),
       ,, drop = FALSE]
 }
+
+
+
+# as_relative.default <- function(x, bbox_moth, offset = NULL){
+#   if(is.null(offset)){
+#     offset <- matrixStats::colMins(bbox_moth)
+#   }
+#   attr(x, "offset") <- offset
+#   x
+# }
+
+
+refind_coords.default <- function(x, offset = NULL){
+  x[,"x"] <- x[,"x"] - offset[1]
+  x[,"y"] <- x[,"y"] - offset[2]
+  return(x)
+}
+
+
+
+
+

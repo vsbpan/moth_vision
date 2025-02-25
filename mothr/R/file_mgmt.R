@@ -338,3 +338,8 @@ dir_remove <- function(x, recursive = TRUE, force = FALSE) {
 remove_dup_slash <- function(x){
   gsub("//", "/", x)
 }
+
+
+mini_moth_path <- function(x,root_path = "C:/"){
+  remove_dup_slash(paste(get_mini_moth_path(root_path = root_path),gsub("img_", "mini_", x), sep = "/"))
+}

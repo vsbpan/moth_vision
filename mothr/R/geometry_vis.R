@@ -3,11 +3,20 @@ plot.keypoints <- function(x,
                           col = colorpal(nrow(x)), 
                           pch = 19, 
                           shrink = 1,
+                          offset = NULL,
                           ...){
   if(is.null(x)){
     cli::cli_alert_danger("No detected keypoint.")
     return(invisible(NULL))
   }
+  
+  if(is.null(offset)){
+    offset <- c(0,0)
+  }
+  
+  x[,1] <- x[,1] - offset[1]
+  x[,2] <- x[,2] - offset[2]
+  
   x <- x / shrink
   x_coord <- x[,1]
   y_coord <- x[,2]
@@ -22,8 +31,17 @@ plot.keypoints <- function(x,
   points(x = x_coord, y = y_coord, col = col, pch = pch, ...)
 }
 
-plot.polygon <- function(x, col = "green", alpha = 0.5, shrink = 1, border = NA, ...){
+plot.polygon <- function(x, col = "green", 
+                         alpha = 0.5, shrink = 1, border = NA, 
+                         offset = NULL, ...){
   col <- grDevices::adjustcolor(col = col, alpha.f = alpha)
+  
+  if(is.null(offset)){
+    offset <- c(0,0)
+  }
+  x[,1] <- x[,1] - offset[1]
+  x[,2] <- x[,2] - offset[2]
+  
   x <- x / shrink
   if(is.null(x)){
     cli::cli_alert_danger("No polygon detected!")
@@ -33,12 +51,21 @@ plot.polygon <- function(x, col = "green", alpha = 0.5, shrink = 1, border = NA,
 }
 
 # Draw bounding box
-plot.bbox <- function(x, fill = "#00000000", col = "red", alpha = 1, shrink = 1, ...){
+plot.bbox <- function(x, fill = "#00000000", col = "red", 
+                      alpha = 1, shrink = 1, offset = NULL, ...){
   col <- grDevices::adjustcolor(col = col, alpha.f = alpha)
   
   if(is.null(x)){
     cli::cli_alert_danger("No bbox detected!")
   }
+  
+  if(is.null(offset)){
+    offset <- c(0,0)
+  }
+  
+  x[,1] <- x[,1] - offset[1]
+  x[,2] <- x[,2] - offset[2]
+  
   x <- x / shrink
   graphics::rect(xleft = x[1,1], 
                  xright = x[2,1], 
@@ -61,15 +88,17 @@ plot.instance <- function(x,
                           bbox_col = "red",
                           bbox_fill = "#00000000",
                           shrink = 1,
+                          offset = NULL,
                           ...){
-  if(has_bbox(x) && bbox){
-    plot(x$bbox, fill = bbox_fill, col = bbox_col, shrink = shrink)
+
+    if(has_bbox(x) && bbox){
+    plot(x$bbox, fill = bbox_fill, col = bbox_col, shrink = shrink, offset = offset)
   }
   if(has_mask(x)){
-    plot(x$polygon, col = mask_col, alpha = mask_alpha, border = mask_border, shrink = shrink)
+    plot(x$polygon, col = mask_col, alpha = mask_alpha, border = mask_border, shrink = shrink, offset = offset)
   }
   if(has_keypoints(x)){
-    plot(x$keypoints, kp_name = kp_name, pch = kp_pch, col = kp_col, shrink = shrink)
+    plot(x$keypoints, kp_name = kp_name, pch = kp_pch, col = kp_col, shrink = shrink, offset = offset)
   }
 }
 
@@ -85,8 +114,9 @@ plot.inlist <- function(x,
                         bbox_moth_col = "yellow",
                         bbox_moth_fill = "#00000000",
                         shrink = 1,
+                        offset = NULL,
                         ...){
-  
+
   for (i in seq_along(x)){
     thing <- x[[i]]$thing_class
     
@@ -101,11 +131,12 @@ plot.inlist <- function(x,
          bbox_col = bbox_col,
          bbox_fill = bbox_fill,
          shrink = shrink,
+         offset = offset,
          ...)
   }
   
   if(isTRUE(bbox_moth)){
-    plot(moth_bbox(x), shrink = shrink, col = bbox_moth_col, fill = bbox_moth_fill)
+    plot(moth_bbox(x), shrink = shrink, col = bbox_moth_col, fill = bbox_moth_fill, offset = offset)
   }
   
   return(invisible(NULL))

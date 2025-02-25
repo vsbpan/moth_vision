@@ -20,7 +20,9 @@ select_things <- function(x, things = c("body", "forewing", "hindwing", "color_c
   things <- match.arg(things, several.ok = TRUE)
   
   cats <- do.call("c",purrr::map(x, "thing_class"))
-  x[cats %in% things]
+  res <- x[cats %in% things]
+  attr(res, "offset") <- attr(x, "offset")
+  as.inlist(res)
 }
 
 
@@ -110,6 +112,29 @@ make_empty_instance <- function(image_id, labels = c("polygon", "keypoints")){
     inst <- c(inst, list("keypoints" = NULL))
   }
   as.instance.list(inst)
+}
+
+as_relative.inlist <- function(x, bbox_moth = moth_bbox(x), offset = NULL){
+  if(is.null(offset)){
+    offset <- matrixStats::colMins(bbox_moth) - 1L
+  }
+  attr(x, "offset") <- offset
+  for(i in seq_along(x)){
+    x[[i]] <- as_relative(x[[i]], offset = offset)
+  }
+  x
+}
+
+as_relative.instance <- function(x, bbox_moth, offset = NULL){
+  if(is.null(offset)){
+    offset <- matrixStats::colMins(bbox_moth) - 1L
+  }
+  attr(x, "offset") <- offset
+  index <- which(names(x) %in% c("bbox", "polygon", "keypoints"))
+  for(i in index){
+    x[[i]] <- refind_coords(x[[i]], offset = offset)
+  }
+  x
 }
 
 
