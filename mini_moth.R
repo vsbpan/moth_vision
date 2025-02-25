@@ -53,3 +53,34 @@ pb_par_lapply(
   parsed_full = parsed_full
 )
 
+
+
+flag_inference_error(paste0("mini_moth_00013371",".jpg"))
+
+flag_image_exclude("img_moth_00013371.jpg")
+
+
+
+mothr::set_verified_tag_id("D:/moth_photos/database/batch_05/img_moth_00008288.jpg", "2024DCR735")
+
+
+z <- parsed_full %>% 
+  update_tag_id() %>% 
+  filter(!is.na(tag_id_guess)) %>% 
+  filter(!file_name %in% unlist(fetch_exclude_flags())) %>% 
+  group_by(tag_id_guess) %>% 
+  mutate(
+    n = length(tag_id_guess)
+  ) %>% 
+  filter(n > 1) %>% 
+  select(path) %>% 
+  arrange(tag_id_guess); launch_photo(z$path[1]);launch_photo(z$path[2]);print(z$tag_id_guess[1])
+
+flag_image_exclude(z$path[1])
+
+
+update_tag_id(parsed_full)
+
+
+
+

@@ -3,7 +3,7 @@ fetch_image_database <- function(database_path = paste(pkgload::pkg_path(vmisc::
   database <- try(suppressMessages(readr::read_csv(database_path, 
                                             progress = FALSE)))
   if(!isTRUE(is.data.frame(database))){
-    cli::cli_abort("Cannot find image registration database! Expected path: {.file database_path}.")
+    cli::cli_abort("Cannot find image registration database! Expected path: {.file {database_path}}.")
   }
   database
 }
@@ -13,7 +13,39 @@ fetch_exclude_flags <- function(database_path = paste(pkgload::pkg_path(vmisc::f
   database <- try(suppressMessages(readr::read_csv(database_path, 
                                             progress = FALSE)))
   if(!isTRUE(is.data.frame(database))){
-    cli::cli_abort("Cannot find exclude flags database! Expected path: {.file database_path}.")
+    cli::cli_abort("Cannot find exclude flags database! Expected path: {.file {database_path}}.")
   }
   database
 }
+
+
+fetch_inference_error <- function(database_path = paste(pkgload::pkg_path(vmisc::fake_pkg()), 
+                                                      "assets/inference_error.csv", sep = "/")){
+  database <- try(suppressMessages(readr::read_csv(database_path, 
+                                                   progress = FALSE)))
+  if(!isTRUE(is.data.frame(database))){
+    cli::cli_abort("Cannot find inference error database! Expected path: {.file {database_path}}.")
+  }
+  database
+}
+
+fetch_verified_tag_id <- function(database_path = paste(pkgload::pkg_path(vmisc::fake_pkg()), 
+                                                       "assets/real_tag_id.csv", sep = "/")){
+  database <- try(suppressMessages(readr::read_csv(database_path, 
+                                                   progress = FALSE)))
+  if(!isTRUE(is.data.frame(database))){
+    cli::cli_abort("Cannot find verified tag id database! Expected path: {.file {database_path}}.")
+  }
+  
+  test <- database %>% 
+    dplyr::group_by(file_name) %>% 
+    dplyr::summarise(n = vmisc::unique_len(tag_id)) %>% 
+    filter(n > 1)
+  
+  if(nrow(test) > 0L){
+    cli::cli_abort("Detected {nrow(test)} instance{?s} where multiple unique {.var tag_id} is assigned to a single image. Something is wrong.")
+  }
+  
+  database
+}
+

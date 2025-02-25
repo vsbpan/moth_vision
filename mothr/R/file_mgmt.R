@@ -334,24 +334,6 @@ dir_remove <- function(x, recursive = TRUE, force = FALSE) {
   cli::cli_abort("Failed to remove {.file {x}}")
 }
 
-flag_image_exclude <- function(x){
-  db <- fetch_exclude_flags()
-  fn <- basename(x)
-  extns <- tools::file_ext(x)
-  if(any(extns == "")){
-    e <- extns[extns == ""]
-    cli::cli_abort("Missing {length(e)} expected file extension{?s}: {e}")
-  }
-  new_d <- data.frame(
-    "file_name" = fn
-  )
-  db <- rbind(db, new_d) %>% dplyr::distinct()
-  n <- length(x)
-  write_path <- eval(as.list(args(fetch_exclude_flags))$database_path)
-  readr::write_csv(db, file = write_path)
-  cli::cli_alert_success("Flagged {n} image{?s} to exclude from database.")
-}
-
 
 remove_dup_slash <- function(x){
   gsub("//", "/", x)
