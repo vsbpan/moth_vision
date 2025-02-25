@@ -108,7 +108,7 @@ parse_file_name <- function(path, keep_extn = TRUE){
 # Auto initiate the file tree if it doesn't exist. 
 init_image_dir <- function(root_path = "C:/",
                            dir_name = "moth_photos",
-                           subdir = c("input_photos", "pending_merge", "database")){
+                           subdir = c("input_photos", "pending_merge", "database", "mini_moth")){
   res <- validate_image_dir(root_path, dir_name = dir_name, subdir = subdir, create = TRUE)
   if(isTRUE(res)){
     cli::cli_alert_success("Expected directories found.")
@@ -135,6 +135,11 @@ get_pending_path <- function(root_path = "C:/"){
 
 get_img_dir_path <- function(root_path = "C:/", dir_name = "moth_photos"){
   res <- paste(root_path, dir_name, sep = "/")
+  remove_dup_slash(res)
+}
+
+get_mini_moth_path <- function(root_path = "C:/"){
+  res <- paste(get_img_dir_path(root_path),"mini_moth", sep = "/")
   remove_dup_slash(res)
 }
 

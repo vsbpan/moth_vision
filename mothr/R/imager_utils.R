@@ -94,3 +94,5 @@ plot.singleton <- function (x, ...) {
     stop("Unsupported image format")
   }
 }
+
+

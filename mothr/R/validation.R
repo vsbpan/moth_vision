@@ -94,7 +94,7 @@ assert_variable_in_df <- function(df, variable){
 
 validate_image_dir <- function(root_path = "C:/",
                                dir_name = "moth_photos",
-                               subdir = c("input_photos", "pending_merge", "database"), 
+                               subdir = c("input_photos", "pending_merge", "database", "mini_moth"), 
                                create = FALSE){
   dir_path <- get_img_dir_path(root_path, dir_name)
   subdir_paths <- paste(dir_path, subdir, sep = "/")

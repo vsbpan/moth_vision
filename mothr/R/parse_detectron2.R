@@ -189,6 +189,8 @@ as.parsed_inference.raw_inference <- function(x){
     "thing_class" = things
   )
   
+  labels <- NULL
+  
   if(has_mask(x$inference)){
     cli::cli_progress_step("Formating polygons", 
                            msg_done = "Polygon formatting complete.", 
@@ -200,6 +202,7 @@ as.parsed_inference.raw_inference <- function(x){
           lapply(parse_polygon_vec)
       )
     )
+    labels <- c(labels, "polygon")
   }
   if(has_keypoints(x$inference)){
     cli::cli_progress_step("Formating keypoints", 
@@ -220,6 +223,7 @@ as.parsed_inference.raw_inference <- function(x){
           })
       )
     )
+    labels <- c(labels, "keypoints")
   }
   cli::cli_progress_step("Collecting parsed results", 
                          msg_done = "Parsed results collection complete.", 
@@ -245,7 +249,7 @@ as.parsed_inference.raw_inference <- function(x){
     )
   }) %>% 
     setNames(img_id2)
-  img_meta <- as.parsed_inference(img_meta)
+  img_meta <- as.parsed_inference(img_meta, labels = labels)
   img_meta$empty_instance <- do.call("c", lapply(img_meta$inlist, is_empty_instance))
   img_meta$num_annotations <- ifelse(img_meta$empty_instance,0,img_meta$num_annotations)
   
@@ -328,12 +332,23 @@ as.parsed_inference.COCO_Json <- function(x, refind_bbox = TRUE){
 }
 
 
-as.parsed_inference.data.frame <- function(x){
+as.parsed_inference.data.frame <- function(x, ...){
   x <- tibble::as_tibble(x)
-  as.pararsed_inference(x)
+  as.pararsed_inference(x, ...)
 }
 
-as.parsed_inference.tbl_df <- function(x){
+as.parsed_inference.tbl_df <- function(x, labels = c("polygon", "keypoints")){
+  x$inlist <- lapply(x$inlist, function(x){
+    if(length(x) > 1){
+      return(purrr::keep(x, purrr::negate(is_empty_instance)))
+    } else {
+      return(x)
+    }
+  })
+  w <- which(do.call("c",lapply(x$inlist, length)) == 0)
+  x$inlist[w] <- vmisc::lapply_name(names(w), function(x){
+    as.inlist(list(make_empty_instance(x, labels = labels)))
+  })
   class(x) <- c("parsed_inference", class(x))
   x
 }
@@ -378,6 +393,8 @@ merge_parsed_inference <- function(mask_df, kp_df){
   mask_df$inlist <- purrr::map2(mask_inl, kp_inl, function(x,y){
     c(x,y)
   })
+  
+  mask_df <- as.parsed_inference(mask_df)
   
   return(mask_df)
 }

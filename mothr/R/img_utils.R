@@ -218,6 +218,19 @@ fast_load_image <- function(path, transform = TRUE){
   bmp 
 }
 
+
+write_jpg <- function(x, file_path, transform = TRUE){
+  if(dim(x)[3L] > 1L){
+    cli::cli_abort("{.var x} must be an image not a video with depth {dim(x)[3L]}.")
+  }
+  x <- as.bmp(x)
+  if(transform){
+    x <- x %>% aperm(c(2, 1, 3))
+  }
+  jpeg::writeJPEG(image = x, target = file_path, quality = 1)
+}
+
+
 # Reformat cimg as bitmap format for interface with jpeg package
 as.bmp <- function(x){
   x <- imager::as.cimg(x)

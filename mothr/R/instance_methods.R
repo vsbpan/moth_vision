@@ -70,8 +70,7 @@ inlist <- function(x, ...){
                  function(x){
                    eval(x, envir = parent.frame(3))
                  })
-  class(x) <- c("list")
-  out <- list(x, unlist(args, recursive = FALSE))
+  out <- do.call("list", c(list(x), args))
   class(out) <- c("inlist", "list")
   return(out)
 }
@@ -95,5 +94,22 @@ moth_bbox <- function(x, expected_things = c("body", "forewing", "hindwing"), ..
   return(as.bbox(l))
 }
 
+make_empty_instance <- function(image_id, labels = c("polygon", "keypoints")){
+  inst <- list(
+    "instance_id" = paste0("inst",gsub_element_wise("00000$", sprintf("%05d", 1), 
+                                                    gsub("[a-z]", "",image_id ))),
+    "image_id" = image_id,
+    "bbox" = NULL,
+    "score" = NA,
+    "thing_class" = NA
+  )
+  if("polygon" %in% labels){
+    inst <- c(inst, list("polygon" = NULL))
+  }
+  if("keypoints" %in% labels){
+    inst <- c(inst, list("keypoints" = NULL))
+  }
+  as.instance.list(inst)
+}
 
 

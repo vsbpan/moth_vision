@@ -20,7 +20,36 @@ parsed_full <- merge_parsed_inference(parsed_mask, parsed_kp)
 parsed_full
 
 
-saveRDS(parsed_full, "cleaned_data/parsed_full.rds")
+# saveRDS(parsed_full, "cleaned_data/parsed_full.rds")
+
+parsed_full <- readRDS("cleaned_data/parsed_full.rds")
 
 
+plot(imfill(dim = c(1500, 1000, 1, 1)))
+plot(parsed_full$inlist[[56]], shrink = 4, bbox = TRUE, bbox_moth = TRUE)
+
+
+
+pb_par_lapply(
+  5001:nrow(parsed_full),
+  function(i, parsed_full){
+    if(parsed_full[i, "empty_instance", drop = TRUE]){
+      return(invisible(NULL))
+    }
+    
+    tryCatch({
+      path <- parsed_full[i, "path", drop = TRUE]
+      new_fn <- gsub("img_moth","mini_moth",basename(path))
+      write_path <- paste(get_mini_moth_path("D:"), new_fn,sep = "/")
+      img <- fast_load_image(path)
+      img <- bbox_crop(img, moth_bbox(parsed_full[i, "inlist", drop = TRUE][[1]]))
+      write_jpg(img, write_path)
+    }, error = function(e){
+      message(e$message)
+      return(NULL)
+    })
+    return(invisible(NULL))
+  }, cores = 4, inorder = FALSE, 
+  parsed_full = parsed_full
+)
 
