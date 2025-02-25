@@ -394,6 +394,22 @@ merge_parsed_inference <- function(mask_df, kp_df){
     c(x,y)
   })
   
+  # Assign new instance_id as there may be dups
+  mask_df$inlist <- lapply(mask_df$inlist, function(x){
+    instance_id <- gsub("img",
+                        "inst", 
+                        gsub_element_wise(
+                          "00000$", sprintf("%05d", seq_along(x)), 
+                          unname(do.call("c", purrr::map(x, "image_id")))
+                        )
+    )
+    names(x) <- instance_id
+    for(i in seq_along(x)){
+      x[[i]]$instance_id <- names(x)[i]
+    }
+    return(x)
+  })
+  
   mask_df <- as.parsed_inference(mask_df)
   
   return(mask_df)
