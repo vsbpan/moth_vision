@@ -162,6 +162,9 @@ as.parsed_inference.raw_inference <- function(x){
     img_meta$tag_text <- parse_pylist(x$meta$tag_text, as.character, simplify = FALSE) %>% 
       lapply(parse_tag_text)
   }
+  if("tick_size" %in% names(x$meta)){
+    img_meta$tick_size <- as.numeric(x$meta$tick_size)
+  }
   
   cli::cli_progress_step("Formating instance metadata and bbox", 
                          msg_done = "Instance metadata and bbox formatting complete.", 

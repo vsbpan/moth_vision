@@ -129,12 +129,12 @@ area.polygon <- function(x, ...){
   abs(.polygon_area(x))
 }
 
-area.pixset <- function(x, ...){
+area.pixset <- function(x, na.rm = FALSE, ...){
   if(is.null(x)){
     return(0)
   }
   stopifnot(dim(x)[3] == 1)
-  sum(x)
+  sum(x, na.rm = na.rm)
 }
 
 area.bbox <- function(x, ...){
