@@ -352,70 +352,8 @@ as.parsed_inference.tbl_df <- function(x, labels = c("polygon", "keypoints")){
   x$inlist[w] <- vmisc::lapply_name(names(w), function(x){
     as.inlist(list(make_empty_instance(x, labels = labels)))
   })
-  class(x) <- c("parsed_inference", class(x))
+  class(x) <- unique(c("parsed_inference", class(x)))
   x
-}
-
-
-merge_parsed_inference <- function(mask_df, kp_df){
-  mask_df_name <- deparse(substitute(mask_df))
-  kp_df_name <- deparse(substitute(kp_df))
-  if(!is.parsed_inference(mask_df)){
-    cli::cli_abort("{.var {mask_df_name}} must be of class {.cls parsed_inference}")
-  }
-  
-  if(!is.parsed_inference(kp_df)){
-    cli::cli_abort("{.var {kp_df_name}} must be of class {.cls parsed_inference}")
-  }
-  
-  assert_variable_in_df(mask_df, c("inlist", "id"))
-  assert_variable_in_df(kp_df, c("inlist", "id"))
-  
-  n_og <- nrow(mask_df)
-  n_kp <- nrow(kp_df)
-  matched <- match(kp_df$id, mask_df$id)
-  matched <- matched[!is.na(matched)]
-  n_new <- length(matched)
-  
-  cli::cli_alert_info("{n_new} of {n_og} images in {.var {mask_df_name}} found in {.var {kp_df_name}} of {n_kp} images.")
-  mask_df <- mask_df[matched, ,drop = FALSE]
-  
-  
-  mask_inl <- mask_df$inlist
-  kp_inl <- kp_df$inlist
-  
-  
-  if(!all(do.call("c",lapply(mask_inl, is.inlist)))){
-    cli::cli_abort("{.var {mask_df_name}} must have a column for a list of {.cls inlist}")
-  }
-  
-  if(!all(do.call("c",lapply(kp_inl, is.inlist)))){
-    cli::cli_abort("{.var {kp_df_name}} must have a column for a list of {.cls inlist}")
-  }
-  
-  mask_df$inlist <- purrr::map2(mask_inl, kp_inl, function(x,y){
-    c(x,y)
-  })
-  
-  # Assign new instance_id as there may be dups
-  mask_df$inlist <- lapply(mask_df$inlist, function(x){
-    instance_id <- gsub("img",
-                        "inst", 
-                        gsub_element_wise(
-                          "00000$", sprintf("%05d", seq_along(x)), 
-                          unname(do.call("c", purrr::map(x, "image_id")))
-                        )
-    )
-    names(x) <- instance_id
-    for(i in seq_along(x)){
-      x[[i]]$instance_id <- names(x)[i]
-    }
-    return(x)
-  })
-  
-  mask_df <- as.parsed_inference(mask_df)
-  
-  return(mask_df)
 }
 
 

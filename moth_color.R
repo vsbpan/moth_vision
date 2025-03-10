@@ -11,9 +11,6 @@ parsed_full <- parsed_full %>%
   )
 
 
-
-
-
 l <- pb_par_lapply(10001:nrow(parsed_full), function(i,parsed_full){
   out <- tryCatch({
     img_path <- parsed_full$file_name[i] %>% 
@@ -45,7 +42,7 @@ parsed_full = parsed_full)
 
 
 
-
+l <- readRDS("invisible/color_counts.rds")
 out <- collect_color_bins(l)
 
 
@@ -143,38 +140,6 @@ w %>%
 
 
 
-d1 <- import_sheets("https://docs.google.com/spreadsheets/d/1-3_FM7t40Iv10BM3XLxWX0Qs__VFkVIP5Deqg0CcmUg/edit?gid=0#gid=0", "data")
-d2 <- import_sheets("https://docs.google.com/spreadsheets/d/1i8C-greXGMThg-0AqQRqaPMHT3KTXxR7x-QTDj5qGbE/edit?gid=0#gid=0", "data")
-
-d <- rbind.fill(d1, d2)
-
-
-
-
-
-
-ref_d <- parsed_full %>% 
-  select(tag_id_guess, id, file_name) %>% 
-  mutate(
-    image_id = paste0("img", id),
-    tag_id = tag_id_guess
-  ) %>% 
-  mothr::update_tag_id() %>% 
-  left_join(
-    d %>% 
-      mutate(
-        tag_id = reformat_tag_id(tag_id)
-      ) %>% 
-      select(
-        tag_id, MONA, date, location, ear_mites
-      ),
-    by= "tag_id"
-  ) %>% 
-  left_join(
-    read_csv("raw_data/MPG-Taxa_20230503.csv"),
-    by = "MONA"
-  )
-
 
 
 
@@ -197,48 +162,13 @@ w %>%
   facet_wrap(~thing_class)
 
 
-b <- parsed_full %>% 
-  select(tag_id_guess, id, file_name, inlist) %>% 
-  mutate(
-    image_id = paste0("img", id),
-    tag_id = tag_id_guess
-  ) %>% 
-  mothr::update_tag_id() %>% 
-  left_join(
-    d %>% 
-      mutate(
-        tag_id = reformat_tag_id(tag_id)
-      ) %>% 
-      select(
-        tag_id, MONA, date, location, ear_mites
-      ),
-    by= "tag_id"
-  ) %>% 
-  left_join(
-    read_csv("raw_data/MPG-Taxa_20230503.csv"),
-    by = "MONA"
-  )
 
 
 
 
 
-b$wl <- lapply(b$inlist, function(x){
-  map(select_things(x, "forewing"), function(x){
-    m <- x$keypoints[,c("x", "y")]
-    dist(m)
-  }) %>% 
-    do.call("c",.) %>% 
-    max()
-}) %>% 
-  do.call("c",.) %>% 
-  unname()
 
-b$body_area <- lapply(b$inlist, function(x){
-  p <- map(select_things(x, "body"), "polygon")
-  max(do.call("c", lapply(p, area)))
-  }) %>% 
-  do.call("c", .)
+
 
 
 b %>% 
@@ -321,23 +251,23 @@ z %>%
 
 z %>% 
   left_join(b, by = "image_id") %>% 
-  mutate(
-    date = as.POSIXct(date, format = "%d-%B-%Y")
-  ) %>% 
-  mutate(
-    month = lubridate::month(date)
-  ) %>% 
-  group_by(month) %>% 
+  group_by(location, month) %>% 
+  filter(!is.na(month)) %>% 
+  tally() %>% 
   summarise(
-    r = median(r),
-    g = median(g),
-    b = median(b)
+    r = median(r, na.rm = TRUE),
+    g = median(g, na.rm = TRUE),
+    b = median(b, na.rm = TRUE)
   ) %>% 
   filter(!is.na(month)) %>% 
-  with({
-    rgb(r/6, g/6, b/6)
-  }) %>%
-  herbivar::plot_colors(linear = TRUE, label = 1:12, label_size = 10)
+  rowwise() %>% 
+  mutate(
+    hex = rgb(r/6, g/6, b/6)
+  ) %>% 
+  {
+    ggplot(.,aes(x = month, y = location)) + 
+      geom_tile(fill = .$hex)
+  }
 
 
   gather(key = channel, value = v, -month) %>% 
@@ -348,3 +278,40 @@ z %>%
 
 
 
+
+
+
+
+
+
+
+
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
