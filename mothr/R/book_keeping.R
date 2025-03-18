@@ -1,7 +1,7 @@
 
 update_tag_id <- function(x){
   db <- fetch_verified_tag_id()
-  x$tag_id_guess <- vapply(seq_along(x$tag_id_guess), function(i){
+  x$tag_id <- vapply(seq_along(x$tag_id_guess), function(i){
     if(x$file_name[i] %in% db$file_name){
       db$tag_id[which(db$file_name %in% x$file_name[i])]
     } else {
