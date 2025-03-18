@@ -359,10 +359,23 @@ as.parsed_inference.tbl_df <- function(x, labels = c("polygon", "keypoints")){
 
 parse_tag_id <- function(x){
   x <- gsub("\\\\n|'| ", "", x)
-  res <- x[grepl("[0-9]DCR[0-9]", x)]
+  x1 <- gsub("(?=^[A-Z]).*?(?=[0-9])","",x, perl = TRUE)
+  res <- x1[grepl("[0-9]DCR[0-9]", x1)]
   res <- unique(res)
   if(length(res) != 1){
-    res <- NA_character_
+    x2 <- x[grepl("DCR.*[0-9]C[0-9]",x)][1]
+    if(length(x2) == 0){
+      return(NA_character_)
+    }
+    x2 <- strsplit(x2, "(?<=(?s).)(?=[A-Z][0-9])", perl = TRUE)[[1]]
+    x2[1] <- paste0(x2[1], stringr::str_extract(string = x2[2], "^."))
+    x2[2] <- sub("^.","", x2[2])
+    res <- paste0(x2[2], x2[1], x2[3])
+    res <- res[grepl("[0-9]DCRC[0-9]",res)]
+    if(length(res) != 1){
+      res <- unique(res)
+      res <- NA_character_
+    }
   }
   return(res)
 }

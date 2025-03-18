@@ -50,8 +50,8 @@ out <- collect_color_bins(l)
 
 
 out2 <- out %>% 
-  #filter(thing_class %in% c("hindwing", "forewing")) %>% 
-  group_by(image_id, thing_class) %>% 
+  filter(thing_class %in% c("forewing", "hindwing")) %>% 
+  group_by(image_id) %>% 
   summarise_all(function(x){
     if(is.character(x)){
       return(unique(x)[1])
@@ -76,9 +76,9 @@ out2 %>%
   ) %>% 
   group_by(image_id, thing_class) %>% 
   summarise(
-    r = mean_wt(r, p),
-    g = mean_wt(g, p),
-    b = mean_wt(b, p)
+    r = mean_wt(r, p) / 6,
+    g = mean_wt(g, p) / 6,
+    b = mean_wt(b, p) / 6
   ) -> z
 
 

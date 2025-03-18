@@ -30,4 +30,12 @@ Imports:
     polyclip,
     jpeg
 Suggests:
+    philentropy,
+    imagefluency,
+    glmmTMB,
+    mgcv,
+    DHARMa,
+    ggquiver,
+    ggpmisc,
+    raster
 

@@ -19,7 +19,8 @@ There are several IDs associated with each image and they might have slightly di
     1.  The instance ID usually looks something like `1100004`, where the last five digits are unique identifiers for different instances and the first n digits up to the 6th digit is the image_id. There can be multiple instance_id associated with each unique image. This is the id which we use to identify specific images when dealing with COCO annotation formats (`COCO_Json`), `raw_inference`, and `parsed_inference` objects. With some luck, the COCO annotator might even honor these identifiers.
 4.  **tag_id**:
     1.  The tag id is a unique specimen identifier that usually looks like `2024DCR3203` . This is the identifier which is printed on one of the photographed tags in each image. It is also the same identifier which relate each specimen to the specimen metadata spreadsheet. Not all specimens have a tag id. As I understand it, only the photographed ones do.
-    2.  There probably needs to be one version that is guessed by *pytesseract* and another version that is manually verified or corrected.
+    2.  *pytesseract* is optimized to only detect the characters `0-9` and `DCR` and the R pipeline can only parse YEAR-DCR-# or YEAR-DCR-C-#. Anything else, the pipeline would fail, so **please stick to the same naming scheme**. Currently, the `tag_id` in the online spreadsheet is formatted as DCR-YEAR-# with no zero padding. A naive tag_id matching would fail without more processing.
+    3.  There probably needs to be one version that is guessed by *pytesseract* and another version that is manually verified or corrected.
 
 ## Workflows
 
