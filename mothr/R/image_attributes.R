@@ -35,3 +35,6 @@ img_typicality2 <- function(.df, weight, file_name, nboot = 1, n = 500, cores = 
 
 
 
+
+
+
