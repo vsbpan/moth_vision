@@ -157,7 +157,10 @@ d_ref <- bind_cols(d_ref, thing_area_calc(parsed_full))
 
 
 
-
-
-
+tree <- readRDS("cleaned_data/lep_mega_tree.rds")
+phylo <- get_tree2(d_ref %>% 
+                    dplyr::select(species, genus, family) %>% 
+                    distinct(), 
+                  tree$tree)
+rm("tree")
 

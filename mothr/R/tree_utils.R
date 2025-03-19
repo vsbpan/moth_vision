@@ -28,6 +28,8 @@ append_family_nodes <- function(tree, taxon_info, new_taxon_info, taxon_order){
   assert_variable_in_df(new_taxon_info, variable = expected_vars)
   taxon_info <- dplyr::select(taxon_info, dplyr::all_of(expected_vars))
   new_taxon_info <- dplyr::select(new_taxon_info, dplyr::all_of(expected_vars))
+  taxon_info <- na.omit(taxon_info)
+  new_taxon_info <- na.omit(new_taxon_info)
   
   stopifnot(
     identical(names(taxon_info),names(new_taxon_info))
@@ -42,7 +44,7 @@ append_family_nodes <- function(tree, taxon_info, new_taxon_info, taxon_order){
     sps <- taxon_info[which(taxon_info[,low_index[i], drop = TRUE] == taxon_i), "species", drop = TRUE]
     a <- tree$genus_family_root %>% 
       dplyr::filter(
-        (only_sp %in% sps) & is.na(genus)
+        (only_sp %in% sps)
       )
     if(nrow(a) > 1){
       a <- a[which.min(inode_root_dist(tree)[a$basal_node]),]
@@ -59,6 +61,27 @@ append_family_nodes <- function(tree, taxon_info, new_taxon_info, taxon_order){
   ) %>% 
     dplyr::distinct()
   
+  tree$genus_family_root %>% 
+    dplyr::group_by(family) %>% 
+    dplyr::mutate(
+      n = length(is.na(genus))
+    ) %>% 
+    filter(n < 1)
+  
+  problem_fam <- tree$genus_family_root %>% 
+    dplyr::group_by(family) %>% 
+    dplyr::mutate(
+      n = sum(is.na(genus))
+    ) %>% 
+    dplyr::filter(n == 0) %>% 
+    .$family
+  new_df <- tree$genus_family_root[tree$genus_family_root$family %in% problem_fam, ]
+  new_df$genus <- NA_character_
+
+  tree$genus_family_root <- dplyr::bind_rows(
+    tree$genus_family_root,
+    new_df
+  )
   tree
 }
 
@@ -67,6 +90,9 @@ get_tree2 <- function(sp_list, tree, show_grafted = FALSE,
                       .progress = "text", dt = TRUE){
   taxon_lab <- c("family","genus","species")
   assert_variable_in_df(sp_list, taxon_lab)
+  sp_list <- na.omit(sp_list)
+  sp_list$species <- gsub(" ","_",sp_list$species)
+  
   tre <- get_one_tree2(sp_list, 
                           tree = tree, 
                           show_grafted = show_grafted,
