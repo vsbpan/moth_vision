@@ -29,9 +29,8 @@ tre$tip.label <- gsub(" ", "_", tre$tip.label)
 d$species <- gsub(" ", "_", d$species)
 
 # Add root_info() per the instructions of `rtrees`
-# Using custom function here so that tidytree and force the tree to be ultrametric, an assumption of ape::branch.times()
-tre <- add_root_info2(
-  tre, 
+tre <- rtrees::add_root_info(
+  tidytree::as.ultrametric(tre), 
   classification = d %>% 
     dplyr::select(genus, family) %>% 
     as.data.frame()
@@ -39,9 +38,6 @@ tre <- add_root_info2(
 
 # Remove duplicates otherwise there would be an error.
 tre$genus_family_root <- distinct(tre$genus_family_root)
-
-# Set as ultrametric
-tre <- tidytree::as.ultrametric(tre)
 
 
 # Get taxon classification for species in MONA database
@@ -91,5 +87,9 @@ read_csv("raw_data/MPG-Taxa_20230503.csv") %>%
 
 tre2 <- get_tree2(w, tree$tree)
 
-plot(tre2, type = "fan")
+plot(tre2)
+
+
+
+
 
