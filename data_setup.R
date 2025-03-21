@@ -26,6 +26,7 @@ d_taxon <- read_csv("raw_data/MPG-Taxa_20230503.csv") %>%
 # Pull partial data for ones with assigned tag ID
 d <- rbind.fill(import_sheets("https://docs.google.com/spreadsheets/d/1-3_FM7t40Iv10BM3XLxWX0Qs__VFkVIP5Deqg0CcmUg/edit?gid=0#gid=0", "data"), 
                 import_sheets("https://docs.google.com/spreadsheets/d/1i8C-greXGMThg-0AqQRqaPMHT3KTXxR7x-QTDj5qGbE/edit?gid=0#gid=0", "data"))
+valid_traps <- readRDS("cleaned_data/valid_traps.rds")
 
 d <- d %>% 
   dplyr::select(tag_id, MONA, location, date, collection_method, photo, ear_mites,light_type,notes, 
@@ -37,7 +38,10 @@ d <- d %>%
     doy = lubridate::yday(date)
   ) %>% 
   rename(sp = species) %>% 
-  as_tibble()
+  as_tibble() %>% 
+  filter(
+    location %in% valid_traps
+  )
 
 # Counted not spread
 d_count <- import_sheets("https://docs.google.com/spreadsheets/d/1Y-0oaVZ2WBF3FntlgCh6pzlGc8neRGQUQIQnyeXEgd8/edit?gid=0#gid=0", sheet = "Sheet1")
@@ -54,6 +58,9 @@ d_count <- d_count %>%
   ) %>% 
   dplyr::select(
     -c(collector, species)
+  ) %>% 
+  filter(
+    location %in% valid_traps
   )
   
 # combine the spread and counted data sheets by uncounting the counted ones
@@ -116,6 +123,8 @@ d_host <- read_csv("raw_data/HOST_download.csv") %>%
     db_sp = ifelse(db_sp == 0, NA, db_sp)
   )
 
+d_col_traits <- read_csv("raw_data/species_color_traits.csv") %>% 
+  dplyr::select(species, mimic, disruptive, complex)
 
 # Compute species level traits
 d_trait <- d %>% 
@@ -124,10 +133,12 @@ d_trait <- d %>%
   mutate(
     no_id = grepl(" sp", species)
   ) %>% 
-  left_join(d_host, by = "species")
+  left_join(d_host, by = "species") %>% 
+  left_join(d_col_traits, by = "species")
 
 # No longer needed
 rm("d_host")
+rm("d_col_traits")
 
 # Compute image record level meta-data
 d_ref <- parsed_full %>% 

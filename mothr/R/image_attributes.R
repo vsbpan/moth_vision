@@ -33,7 +33,24 @@ img_typicality2 <- function(.df, weight, file_name, nboot = 1, n = 500, cores = 
 
 
 
-
+image_attribute <- function(x, attribute = c("complexity","contrast")){
+  stopifnot(is.array(x))
+  f <- function(a){
+    switch(a, 
+           "complexity" = imagefluency::img_complexity,
+           "contrast" = imagefluency::img_contrast,
+           "self_similarity" = imagefluency::img_self_similarity)
+  }
+  funs <- lapply(attribute, f)
+  
+  purrr::map(
+    funs, function(foo){
+      foo(x)
+    }
+  ) %>% 
+    do.call("c", .) %>% 
+    setNames(attribute)
+}
 
 
 
