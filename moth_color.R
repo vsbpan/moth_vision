@@ -50,7 +50,7 @@ out <- collect_color_bins(l)
 
 
 out2 <- out %>% 
-  filter(thing_class %in% c("forewing", "hindwing")) %>% 
+  #filter(thing_class %in% c("forewing", "hindwing")) %>% 
   group_by(image_id) %>% 
   summarise_all(function(x){
     if(is.character(x)){
@@ -59,6 +59,16 @@ out2 <- out %>%
       return(sum(x))
     }
   })
+out2 <- out2 %>% 
+  select(image_id, `1-1-1`:`6-6-6`) %>% 
+  gather(key = key, value = val, `1-1-1`:`6-6-6`) %>% 
+  group_by(image_id) %>% 
+  arrange(image_id, key) %>% 
+  summarise(
+    image_id = unique(image_id),
+    val = list("val" = val)
+  ) %>% 
+  left_join(d_ref)
 
 
 out2 %>% 

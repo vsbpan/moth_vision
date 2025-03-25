@@ -80,3 +80,16 @@ dist2 <- function(l, FUN, is_symmetric = TRUE, cores = 1){
   res <- as.dist(res, diag = TRUE, upper = TRUE)
   return(res)
 }
+
+
+future <- function(x, n = 1){c(x[-(1:n)],rep(NA_real_, n))}
+
+insert_missing <- function(.df, n = n){
+  a <- .df %>%
+    dplyr::select(-c({{n}})) 
+  a %>% 
+    lapply(unique) %>% 
+    do.call("expand_grid", .) %>% 
+    dplyr::left_join(.df, by = names(a)) %>% 
+    dplyr::mutate(n = ifelse(is.na({{n}}), 0, {{n}}))
+}
