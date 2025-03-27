@@ -9,6 +9,7 @@ import_sheets <- function(url, sheet, ...){
 }
 
 reformat_tag_id <- function(x){
+  warning("Currently does not accomedate WPC codes. Proceed with caution!")
   str_split(x, "-") %>% 
     lapply(function(x){
       if(length(x) == 4){
@@ -20,8 +21,8 @@ reformat_tag_id <- function(x){
     do.call("c", .)
 }
 
-
 split_tag_id <- function(x, collapse = TRUE){
+  warning("Currently does not accomedate WPC codes. Proceed with caution!")
   f <- function(x, collapse){
     w <- strsplit(x,"DCR")[[1]]
     if(length(w) != 2){

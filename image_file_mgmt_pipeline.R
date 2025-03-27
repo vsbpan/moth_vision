@@ -18,7 +18,7 @@ shell(sprintf("Open %s", get_pending_path(root_path = rp)))
 
 # Step 3
 ## Merge the validated photos to the database
-merge_to_database(root_path = rp)
+new_files <- merge_to_database(root_path = rp)
 
 # Step 4 (optional)
 ## Find the paths to the new images that you want to register
