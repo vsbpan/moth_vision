@@ -198,7 +198,7 @@ image_in_database <- function(x, root_path = options("database_path")$database_p
   return(any(files_matched))
 }
 
-merge_to_database <- function(root_path = options("database_path")$database_path){
+merge_to_database <- function(root_path = options("database_path")$database_path, historic = FALSE){
   db_path <- get_database_path(root_path)
   input_path <- get_input_path(root_path)
   pending_path <- get_pending_path(root_path)
@@ -262,7 +262,7 @@ merge_to_database <- function(root_path = options("database_path")$database_path
     cli::cli_abort("There seems to be {n_dup} image files in the database with the same name as the proposed new names. Something is wrong. 
     Contact admin for guidence. 
     
-    Offending entr{?es/ies}: {.file {dup}}")
+    Offending entr{?y/ies}: {.file {dup}}")
   }
   
   
@@ -270,12 +270,40 @@ merge_to_database <- function(root_path = options("database_path")$database_path
                          msg_done = "Successfully merged {n_pending} images to the database!", 
                          msg_failed = "Error in merging {n_pending} images to the database!"
                          )
+  
+  if(isTRUE(historic)){
+    image_type <- "historic specimens"
+  } else {
+    image_type <- "modern specimens"
+  }
+  ans <- utils::askYesNo(sprintf("These images are going to be flagged as %s. Is this correct?", image_type))
+  if(!isTRUE(ans)){
+    cli::cli_alert("Gracefully exiting function...")
+    return(invisible(NULL))
+  }
+  
   file.rename(
     pending_files,
     new_file_paths
   )
-
   
+  if(isTRUE(historic)){
+    try_flag <- tryCatch({
+      flag_historic_specimen(basename(new_file_paths))
+    }, error = function(e){
+      cli::cli_alert_danger(c(
+        "Something went wrong when flagging the images as historic specimens.\n",
+        "If the {.file {pending_path}} is empty, then you are probably okay. Proceed to delete everything in the {.file {input_path}}. I have returned the image file names to register as historic. Try to run {.code flag_historic_specimen(my_file_names)} to reflag.\n", 
+        "Something caused the flagging stage to fail. Error message below:\n",
+        "{e$message}"
+      ))
+      return(FALSE)
+    })
+    if(isFALSE(try_flag)){
+      return(basename(new_file_paths))
+    }
+  }
+
   # Garbage collector
   cli::cli_progress_step("Begining garbage collector", 
                          msg_done = "Done wiping {.file {pending_path}} and {.file {input_path}}!", 
@@ -295,7 +323,7 @@ merge_to_database <- function(root_path = options("database_path")$database_path
                    
                    If you are seeing this message again, contact admin for guidence. 
                    
-                   Offending entr{?es/ies}: {.file {basename(pending_files)}}")
+                   Offending entr{?y/ies}: {.file {basename(pending_files)}}")
   }
   
   # Remove directories and files
@@ -317,7 +345,7 @@ merge_to_database <- function(root_path = options("database_path")$database_path
                    
                    If you are seeing this message again, contact admin for guidence. 
                    
-                   Offending entr{?es/ies}: {.file {basename(input_files)}}")
+                   Offending entr{?y/ies}: {.file {basename(input_files)}}")
   }
   
   on.exit({
@@ -325,8 +353,10 @@ merge_to_database <- function(root_path = options("database_path")$database_path
     cli::cli_progress_cleanup()
   })
   
-  return(invisible(NULL))
+  return(invisible(new_file_names))
 }
+
+
 
 dir_remove <- function(x, recursive = TRUE, force = FALSE) {
   if (unlink(x, recursive, force) == 0)

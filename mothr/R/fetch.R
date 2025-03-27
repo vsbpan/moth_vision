@@ -49,3 +49,16 @@ fetch_verified_tag_id <- function(database_path = paste(pkgload::pkg_path(vmisc:
   database
 }
 
+
+fetch_historic_flag <- function(database_path = paste(pkgload::pkg_path(vmisc::fake_pkg()), 
+                                                      "assets/historic_specimen.csv", sep = "/")){
+  database <- try(suppressMessages(readr::read_csv(database_path, 
+                                                   progress = FALSE)))
+  if(!isTRUE(is.data.frame(database))){
+    cli::cli_abort("Cannot find historic flag database! Expected path: {.file {database_path}}.")
+  }
+  
+  database
+}
+
+

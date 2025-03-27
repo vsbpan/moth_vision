@@ -134,7 +134,7 @@ import_raw_inference <- function(path_meta, path_inference){
 
 
 
-as.parsed_inference.raw_inference <- function(x){
+as.parsed_inference.raw_inference <- function(x, historic = FALSE){
   cli::cli_progress_step("Initiating", msg_done = "Initiation complete.", msg_failed = "Initiation failed.")
   
   stopifnot(is.raw_inference(x))
@@ -153,8 +153,24 @@ as.parsed_inference.raw_inference <- function(x){
   
   
   if("tag_id_guess" %in% names(x$meta)){
+    if(isTRUE(historic)){
+      specimen_type <- "historic"
+    } else {
+      specimen_type <- "modern"
+    }
+    
+    cli::cli_alert_info(c(
+      "Parsing tag_id as {.val {specimen_type}} \n",
+      "If this is incorrect, set {.arg historic} to {.val {!isTRUE(historic)}}"
+    ))
+    
+    parse_tag_id_method <- switch(
+      specimen_type,
+      "modern" = parse_tag_id,
+      "historic" = parse_tag_id2
+    )
     img_meta$tag_id_guess <- parse_pylist(x$meta$tag_id_guess, as.character, simplify = FALSE) %>% 
-      lapply(parse_tag_id) %>% 
+      lapply(parse_tag_id_method) %>% 
       do.call("c", .)
   }
   
@@ -359,7 +375,8 @@ as.parsed_inference.tbl_df <- function(x, labels = c("polygon", "keypoints")){
 
 parse_tag_id <- function(x){
   x <- gsub("\\\\n|'| ", "", x)
-  x1 <- gsub("(?=^[A-Z]).*?(?=[0-9])","",x, perl = TRUE)
+  # Remove anything that begins with a letter up to the first number
+  x1 <- gsub("(?=^[A-Z]).*?(?=[0-9])","",x, perl = TRUE) 
   res <- x1[grepl("[0-9]DCR[0-9]", x1)]
   res <- unique(res)
   if(length(res) != 1){
@@ -377,6 +394,15 @@ parse_tag_id <- function(x){
       res <- NA_character_
     }
   }
+  return(res)
+}
+
+parse_tag_id2 <- function(x){
+  x <- gsub("\\\\n|'| ", "", x)
+  # Remove anything that begins with a number up to the first letter
+  x1 <- gsub("(?=^[0-9]).*?(?=[A-Z])","",x, perl = TRUE)
+  res <- x1[grepl("WPC[0-9]", x1)]
+  res <- unique(res)
   return(res)
 }
 

@@ -17,7 +17,7 @@ flag_image_exclude <- function(x){
   fn <- basename(x)
   extns <- tools::file_ext(x)
   if(any(extns == "")){
-    e <- extns[extns == ""]
+    e <- fn[extns == ""]
     cli::cli_abort("Missing {length(e)} expected file extension{?s}: {e}")
   }
   new_d <- data.frame(
@@ -36,7 +36,7 @@ flag_inference_error<- function(x, version = "1.0"){
   fn <- gsub("mini_moth","img_moth", x)
   extns <- tools::file_ext(x)
   if(any(extns == "")){
-    e <- extns[extns == ""]
+    e <- fn[extns == ""]
     cli::cli_abort("Missing {length(e)} expected file extension{?s}: {e}")
   }
   new_d <- data.frame(
@@ -53,12 +53,12 @@ flag_inference_error<- function(x, version = "1.0"){
 }
 
 
-set_verified_tag_id <- function(x, tag_id){
+flag_verified_tag_id <- function(x, tag_id){
   db <- fetch_verified_tag_id()
   fn <- basename(x)
   extns <- tools::file_ext(x)
   if(any(extns == "")){
-    e <- extns[extns == ""]
+    e <- fn[extns == ""]
     cli::cli_abort("Missing {length(e)} expected file extension{?s}: {e}")
   }
   if(missing(tag_id)){
@@ -80,3 +80,28 @@ set_verified_tag_id <- function(x, tag_id){
     "Added {n} verified tag id{?s} to database."
   ))
 }
+
+
+flag_historic_specimen <- function(x){
+  db <- fetch_historic_flag()
+  if(missing(x)){
+    cli::cli_abort("Missing {.arg x} with no default.")
+  }
+  fn <- basename(x)
+  extns <- tools::file_ext(x)
+  if(any(extns == "")){
+    e <- fn[extns == ""]
+    cli::cli_abort("Missing {length(e)} expected file extension{?s}: {e}")
+  }
+  new_d <- data.frame(
+    "file_name" = fn
+  )
+  db <- rbind(db, new_d) %>% dplyr::distinct()
+  n <- length(x)
+  write_path <- eval(as.list(args(fetch_historic_flag))$database_path)
+  readr::write_csv(db, file = write_path)
+  cli::cli_alert_success("Flagged {n} image{?s} as photo{?s} of historic specimen{?s}.")
+}
+
+
+
