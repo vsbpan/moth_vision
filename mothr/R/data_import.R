@@ -30,6 +30,7 @@ split_tag_id <- function(x, collapse = TRUE){
   f <- function(x, collapse){
     if(is.historic(x)){
       w <- strsplit(x,"WPC")[[1]]
+      w <- w[w != ""]
       if(length(w) != 1){
         return(NA_character_)
       }

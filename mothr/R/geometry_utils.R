@@ -107,6 +107,19 @@ as.pixset.bbox <- function(x, dim_xy){
   return(p)
 }
 
+as.pixset.instance <- function(x, dim_xy){
+  as.pixset(x$polygon,dim_xy = dim_xy)
+}
+
+as.pixset.inlist <- function(x, dim_xy){
+  x %>% 
+    lapply(function(x, dim_xy){
+      as.pixset(x,dim_xy = dim_xy)
+    }, dim_xy = dim_xy) %>% 
+    imager::as.imlist() %>% 
+    imager::parany()
+}
+
 centroid.polygon <- function(x){
   n <- nrow(x)
   x <- rbind(x, x[1,])
