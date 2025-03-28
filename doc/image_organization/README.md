@@ -32,18 +32,25 @@ In this section, I go over how one would add the new images taken directly from 
 
 #### 1. Image collection
 
-After a photography session (or whenever you are ready), find the new photos (and subdirectories) in `C:/Users/LoPresti Lab/Pictures/new_cannon_photos/` . **Move** (not copy) the folders that contain the new photos to a directory called `C:/moth_photos/input_photos`. If such a directory does not exist, you can initiate the file tree with the code:
+After a photography session (or whenever you are ready), find the new photos (and subdirectories) in `C:/Users/LoPresti Lab/Pictures/new_cannon_photos/` . ***Move*** (not copy) the folders that contain the new photos to a directory called `C:/moth_photos/input_photos`. If such a directory does not exist, you can initiate the file tree with the code:
 
 ```{r}
-init_image_dir(root_path = "C:/")
+# Make sure that you are using the right root path by setting it in the global options.
+options(
+  "database_path" = "C:/"
+)
+# Initiate file tree
+init_image_dir()
 ```
 
-The root path can be changed from `C:/` to something else with the `root_path` argument.
+The root path can be changed from `C:/` to something else with the `root_path` argument. By default, it tries to grab what you have set in the global options.
+
+For reasons that we will go over below, we want to split this operation by historic / modern specimens. That is, when attempting to merge new photos, please ***run this entire pipeline for historic and modern specimens separately***.
 
 Run the code below to collect all the photos in a new directory called `C:/moth_photos/pending_merge`. The photos are copied, so if something goes wrong, you still have the `moth_photos/input_photos` to restore your progress.
 
 ```{r}
-collect_images(root_path = "C:/")
+collect_images()
 ```
 
 #### 2. Image validation
@@ -57,17 +64,21 @@ Next, you want to check the images in the `moth_photos/pending_merge/` folder fo
 
 #### 3. Merging pending images
 
-Once the images in the `moth_photos/pending_merge/` folder passed the visual validation, we want to merge them to the image database which we went through great lengths to keep clean. Run the code below to do so. When the merging is complete, **a garbage collector would try to wipe the files in the** `moth_photos/input_images/` **and** `moth_photos/pending_merge/`. Every 2000 images will be put into a new subdirectory `moth_photos/database/batch_**`.
+Once the images in the `moth_photos/pending_merge/` folder passed the visual validation, we want to merge them to the image database which we went through great lengths to keep clean. Run the code below to do so. When the merging is complete, ***a garbage collector would try to wipe the files in the*** `moth_photos/input_images/` ***and*** `moth_photos/pending_merge/`. Every 2000 images will be put into a new subdirectory `moth_photos/database/batch_**`.
+
+The `historic =` argument allows you to flag the files associated with the historic specimens. If you are dealing with historic specimens, please set `historic = TRUE`. For modern specimens, please set `historic = FALSE`. A pop-up will ask you to confirm the setting when you run the function below:
 
 ```{r}
-merge_to_database(root_path = "C:/")
+new_files <- merge_to_database(historic = # Set by user)
 ```
 
-There is currently no checks implemented to check if you are merging duplicate images due to computation limitations, so be careful not to merge a set of images multiple times! Contact Vincent for code to check if an image has already been entered in the database or run `image_in_database("MY_IMG_FILE_PATH",root_path = "C:/", quiet = FALSE)`.
+There is currently no checks implemented to check if you are merging duplicate images due to computation limitations, so be careful not to merge a set of images multiple times! Contact Vincent for code to check if an image has already been entered in the database or run `image_in_database("MY_IMG_FILE_PATH", quiet = FALSE)`.
+
+If something goes wrong when executing the function can you need to flag the historic specimen photos manually, you can run `flag_historic_specimen(new_files)` or contact Vincent. The function `merge_to_database()` tries to return the image names when it fails.
 
 #### 4. Image registration (optional)
 
-When new images are added to the database, we need to register the image file names so that a unique image_id is assigned to each new file name. The reason is that annotation files need to have integer numbers as the identifier and we want to keep track of which image got annotated how. **Unless you are dealing with annotation files, there is no need to run this code.** If you do, you have to remember to push your changes to the repository so that subsequent registrations on other machines do not conflict with the new registrations you made.
+When new images are added to the database, we need to register the image file names so that a unique image_id is assigned to each new file name. The reason is that annotation files need to have integer numbers as the identifier and we want to keep track of which image got annotated how. ***Unless you are dealing with annotation files, there is no need to run this code*****.** If you do, you have to remember to push your changes to the repository so that subsequent registrations on other machines do not conflict with the new registrations you made.
 
 ```{r}
 # Find the paths to the new images that you want to register

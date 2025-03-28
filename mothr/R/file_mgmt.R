@@ -182,6 +182,9 @@ collect_images <- function(root_path = options("database_path")$database_path){
 
 
 image_in_database <- function(x, root_path = options("database_path")$database_path, quiet = FALSE){
+  if(missing(x)){
+    cli::cli_abort("Must supply argument {.arg x}")
+  }
   db_path <- get_database_path(root_path)
   files <- list.files(db_path, pattern = ".jpg", 
              full.names = TRUE, recursive = TRUE, ignore.case = TRUE)
@@ -265,11 +268,10 @@ merge_to_database <- function(root_path = options("database_path")$database_path
     Offending entr{?y/ies}: {.file {dup}}")
   }
   
-  
-  cli::cli_progress_step("Merging {n_pending} new images to the database.", 
-                         msg_done = "Successfully merged {n_pending} images to the database!", 
-                         msg_failed = "Error in merging {n_pending} images to the database!"
-                         )
+  cli::cli_progress_step("Double checking function settings with user. Please respond to the pop-up.", 
+                         msg_done = "Successfully retreived user confirmation.", 
+                         msg_failed = "Error in getting user confirmation."
+  )
   
   if(isTRUE(historic)){
     image_type <- "historic specimens"
@@ -278,9 +280,15 @@ merge_to_database <- function(root_path = options("database_path")$database_path
   }
   ans <- utils::askYesNo(sprintf("These images are going to be flagged as %s. Is this correct?", image_type))
   if(!isTRUE(ans)){
-    cli::cli_alert("Gracefully exiting function...")
+    cli::cli_progress_done()
+    cli::cli_alert("Function settings not confirmed by user. Gracefully exiting function...")
     return(invisible(NULL))
   }
+  
+  cli::cli_progress_step("Merging {n_pending} new images to the database.", 
+                         msg_done = "Successfully merged {n_pending} images to the database!", 
+                         msg_failed = "Error in merging {n_pending} images to the database!"
+  )
   
   file.rename(
     pending_files,
