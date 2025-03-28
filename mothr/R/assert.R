@@ -1,3 +1,12 @@
+is.historic <- function(x){
+  vmisc::isTRUE_elementwise(grepl("WPC", x))
+}
+
+file_is_historic <- function(x){
+  fn <- fetch_historic_flag()$file_nme
+  x %in% fn
+}
+
 is.raw_inference <- function(x){
   inherits(x, "raw_inference")
 }

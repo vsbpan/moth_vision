@@ -32,7 +32,7 @@ In this section, I go over how one would add the new images taken directly from 
 
 #### 1. Image collection
 
-After a photography session (or whenever you are ready), find the new photos (and subdirectories) in `C:/Users/LoPresti Lab/Pictures/new_cannon_photos/` . Move the folders that contain the new photos to a directory called `C:/moth_photos/input_photos`. If such a directory does not exist, you can initiate the file tree with the code:
+After a photography session (or whenever you are ready), find the new photos (and subdirectories) in `C:/Users/LoPresti Lab/Pictures/new_cannon_photos/` . **Move** (not copy) the folders that contain the new photos to a directory called `C:/moth_photos/input_photos`. If such a directory does not exist, you can initiate the file tree with the code:
 
 ```{r}
 init_image_dir(root_path = "C:/")
@@ -99,8 +99,13 @@ flag_image_exclude("FILE NAME OF THE EXCLUDED IMAGE.")
 ### Working with the image database
 
 ```{r}
+# TO DO: 
+# Add some explanation of the file tree system
+# Add explanation of flagging functions
+# Add explanation of image id, tag id, file name, path, conversion
+# Add another doc page for initiating the full cleaned dataset pipeline
+# Add explanation of how github works and some handy R wapped shell scripts
 
-fetch_image_database()
 ```
 
 ## Misc

@@ -348,9 +348,16 @@ merge_to_database <- function(root_path = options("database_path")$database_path
                    Offending entr{?y/ies}: {.file {basename(input_files)}}")
   }
   
+  # success <- TRUE
+  
   on.exit({
     cli::cli_progress_done()
     cli::cli_progress_cleanup()
+    # if(success){
+    #   p <- "C:/Users/LoPresti Lab/Pictures/new_cannon_photos/"
+    #   p2 <- "C:/Users/LoPresti Lab/Pictures/old_cannon_photos/"
+    #   cli::cli_alert("You are all set! \n Please remember to move the files in {.path {p}} to {.path {p2}}")
+    # }
   })
   
   return(invisible(new_file_names))
