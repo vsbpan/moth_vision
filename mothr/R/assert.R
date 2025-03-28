@@ -3,8 +3,11 @@ is.historic <- function(x){
 }
 
 file_is_historic <- function(x){
-  fn <- fetch_historic_flag()$file_nme
-  x %in% fn
+  if(any(is.na(x))){
+    cli::cli_warn("{.arg x} contains {sum(is.na(x))} NA{?s}. No garuntee the results make sense.")
+  }
+  fn <- fetch_historic_flag()$file_name
+  basename(x) %in% fn
 }
 
 is.raw_inference <- function(x){

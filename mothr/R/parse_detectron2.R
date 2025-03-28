@@ -152,11 +152,12 @@ as.parsed_inference.raw_inference <- function(x){
     )
   
   
-  if("tag_id_guess" %in% names(x$meta)){
-
+  if(any(c("tag_id_guess_h", "tag_id_guess_m") %in% names(x$meta))){
+    f_historic <- file_is_historic(x$meta$file_name)
+    x$meta$tag_id_guess <- ifelse(f_historic, x$meta$tag_id_guess_h, x$meta$tag_id_guess_m)
     img_meta$tag_id_guess <- parse_pylist(x$meta$tag_id_guess, as.character, simplify = FALSE) %>% 
       purrr::map2(
-        ifelse(file_is_historic(x$meta$file_name), "historic", "modern"),
+        ifelse(f_historic, "historic", "modern"),
         parse_tag_id) %>% 
       do.call("c", .)
   }
@@ -386,9 +387,19 @@ parse_tag_id <- function(x, type = c("modern","historic")){
   } else {
     x <- gsub("\\\\n|'| ", "", x)
     # Remove anything that begins with a number up to the first letter
-    x1 <- gsub("(?=^[0-9]).*?(?=[A-Z])","",x, perl = TRUE)
+    x1 <- gsub("(?=^[0-9]).*?(?=W)","",x, perl = TRUE)
+    # Remove anything that ends with a letter up to the last number 
+    x1 <- gsub("(\\d)[A-Z]*$","\\1",x1, perl = TRUE)
     res <- x1[grepl("WPC[0-9]", x1)]
     res <- unique(res)
+    if(length(res) != 1){
+      res <- x[grepl("WPC[0-9]", x) & 
+                 startsWith(x, "W") & 
+                 grepl("[0-9]$", x, perl = TRUE)]
+      if(length(res) != 1){
+        res <- NA_character_
+      } 
+    }
     return(res)
   }
 }

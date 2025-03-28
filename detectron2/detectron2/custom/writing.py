@@ -125,7 +125,7 @@ def img_inference(predictor, root_path, inference_info, meta, max_detection, mod
 
 # Wrapper for writing model inference on all images in a subdirectory of the root directory 
 def write_img_inference(predictor, write_path, name, read_path, model_ver, meta, max_detection, mode):
-    now = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+    now = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
     inference_info = model_ver + "__" + now
     df_meta, df_instance = img_inference(predictor, read_path, inference_info, meta, max_detection, mode)
     write_csv(os.path.join(write_path, name + "_inference_" + mode + ".csv"), df_instance)
