@@ -134,7 +134,7 @@ import_raw_inference <- function(path_meta, path_inference){
 
 
 
-as.parsed_inference.raw_inference <- function(x){
+as.parsed_inference.raw_inference <- function(x, unregistered.ok = FALSE){
   cli::cli_progress_step("Initiating", msg_done = "Initiation complete.", msg_failed = "Initiation failed.")
   
   stopifnot(is.raw_inference(x))
@@ -142,7 +142,7 @@ as.parsed_inference.raw_inference <- function(x){
   cli::cli_progress_step("Formating image metadata", 
                          msg_done = "Image metadata formatting complete.", 
                          msg_failed = "Image metadata formatting failed.")
-  img_meta <- .format_images_engine(x$meta, x$inference)
+  img_meta <- .format_images_engine(x$meta, x$inference, unregistered.ok)
   
   img_meta <- img_meta %>% 
     cbind(
@@ -179,7 +179,7 @@ as.parsed_inference.raw_inference <- function(x){
     dplyr::mutate(instance_id = seq_along(file_name)) %>% 
     dplyr::ungroup()
   
-  image_id <- assign_image_id(x$inference$file_name)
+  image_id <- img_meta$id[match(x$inference$file_name, img_meta$path)]
   # add up 0 padding to length 5
   id <- paste0("inst",as.numeric(gsub_element_wise("00000$", sprintf("%05d", x$inference$instance_id), image_id)))
   stopifnot(!any(duplicated(id)))

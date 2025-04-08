@@ -25,6 +25,32 @@ def mask2polygon(mask, epsilon_wt = 0.01):
                     
   return polygon
 
+def gather_instance_pred3(fi, instances, meta): 
+    dataset = []
+
+    if(len(instances) == 0): 
+        data = {}
+        data["file_name"] = fi
+        data["thing_class"] = "NA"
+        data["score"] = "NA"
+        data["bbox"] = "NA"
+        dataset.append(data)
+    
+    pred_classes = instances.pred_classes.tolist()
+    classes_label = MetadataCatalog.get(meta).get("thing_classes")
+    pred_class_score = instances.scores.tolist()
+    pred_bbox = instances.pred_boxes.tensor.tolist()
+    
+    for i in range(len(instances)):
+        data = {}
+        data["file_name"] = fi
+        data["thing_class"] = classes_label[pred_classes[i]]
+        data["score"] = pred_class_score[i]
+        data["bbox"] = pred_bbox[i]
+        dataset.append(data)
+        
+    return dataset
+
 def gather_image_meta2(fi, instances, inference_info): 
     data = {}
     data["file_name"] = fi
@@ -115,8 +141,11 @@ def img_inference(predictor, root_path, inference_info, meta, max_detection, mod
         elif mode == "keypoint": 
             meta_data = gather_image_meta2(fi, inst, inference_info)
             instance_data = gather_instance_pred2(fi, inst, meta)
+        elif mode == "bbox":
+            meta_data = gather_image_meta2(fi, inst, inference_info)
+            instance_data = gather_instance_pred3(fi, inst, meta)
         else: 
-            raise Exception("Invalid value provided for 'mode'. Must be 'mask' or 'keypoint'." ) 
+            raise Exception("Invalid value provided for 'mode'. Must be 'mask', 'keypoint', or 'bbox'." ) 
         meta_data_out.append(meta_data)
         instance_data_out = instance_data_out + instance_data
     

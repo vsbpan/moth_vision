@@ -77,8 +77,6 @@ dist2 <- function(l, FUN, is_symmetric = TRUE, cores = 1){
 }
 
 
-future <- function(x, n = 1){c(x[-(1:n)],rep(NA_real_, n))}
-
 insert_missing <- function(.df, n = n){
   a <- .df %>%
     dplyr::select(-c({{n}})) 

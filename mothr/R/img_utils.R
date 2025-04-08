@@ -255,30 +255,6 @@ slice_eval <- function(..., FUN) {
   cimg::as.cimg(out)
 }
 
-# Combine multiple arrays of the same dimension by the last dimension
-abind <- function(...){
-  arrays <- list(...)
-  
-  # Check if all arrays have the same dimensions
-  dims <- lapply(arrays, dim)
-  # Get the dimensions of a single array
-  array_dim <- dims[[1]]
-  
-  # Determine the new dimensions of the combined array
-  n <- length(array_dim)
-  
-  if (!all(sapply(dims, function(x) all(x[-length(x)] == array_dim[-n])))) {
-    cli::cli_abort("All arrays must have the same dimensions!")
-  }
-  
-  
-  combined_dim <- c(array_dim[-n], do.call("sum",purrr::map(dims, n)))
-  
-  # Combine arrays along the last axis
-  combined_array <- array(unlist(arrays), dim = combined_dim)
-  
-  return(combined_array)
-}
 
 
 

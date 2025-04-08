@@ -94,7 +94,7 @@ format_categories_COCO <- function(df){
   return(res)
 }
 
-.format_images_engine <- function(df_meta, df_inference){
+.format_images_engine <- function(df_meta, df_inference, unregistered.ok = FALSE){
   dim_list <- parse_pylist(df_meta$image_size, simplify = FALSE)
   empty_list_list <- lapply(seq_len(nrow(df_meta)), function(x) vector(mode = "list", length = 0))
   
@@ -112,7 +112,7 @@ format_categories_COCO <- function(df){
   
   validate_inference(df_meta, df_inference)
   
-  img_id <- assign_image_id(df_meta$file_name)
+  img_id <- assign_image_id(df_meta$file_name, unregistered.ok)
   
   images <- data.frame(
     "id" = img_id,
