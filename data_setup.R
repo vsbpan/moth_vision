@@ -33,7 +33,7 @@ valid_traps <- readRDS("cleaned_data/valid_traps.rds")
 
 d <- d %>% 
   dplyr::select(tag_id, MONA, location, date, 
-                family, genus, species) %>%
+                family, genus, species, sex) %>%
   rename(sp = species) %>% 
   as_tibble() %>% 
   filter(
@@ -75,7 +75,8 @@ d <- d_count %>%
   uncount(number) %>% 
   mutate(
     tag_id = NA,
-    family = NA
+    family = NA,
+    sex = NA
   ) %>% 
   select(-c(notes)) %>% 
   rbind(d) %>% 

@@ -1,12 +1,11 @@
 vmisc::load_all2("mothr")
 
-
 # # Process Allie's historic specimen images
-# d <- import_raw_inference(path_meta = "inference/allie_historic_image_meta_mask.csv", 
+# d <- import_raw_inference(path_meta = "inference/allie_historic_image_meta_mask.csv",
 #                           path_inference = "inference/allie_historic_inference_mask.csv")
 # 
 # 
-# d2 <- import_raw_inference(path_meta = "inference/allie_historic_image_meta_keypoint.csv", 
+# d2 <- import_raw_inference(path_meta = "inference/allie_historic_image_meta_keypoint.csv",
 #                            path_inference = "inference/allie_historic_inference_keypoint.csv")
 # 
 # 
@@ -25,7 +24,7 @@ vmisc::load_all2("mothr")
 #     if(parsed_full[i, "empty_instance", drop = TRUE]){
 #       return(invisible(NULL))
 #     }
-#     
+# 
 #     tryCatch({
 #       path <- parsed_full[i, "path", drop = TRUE]
 #       new_fn <- gsub("img_moth","mini_moth",basename(path))
@@ -38,13 +37,11 @@ vmisc::load_all2("mothr")
 #       return(NULL)
 #     })
 #     return(invisible(NULL))
-#   }, cores = 4, inorder = FALSE, 
+#   }, cores = 4, inorder = FALSE,
 #   parsed_full = parsed_full
 # )
 # 
 # saveRDS(parsed_full, file = "cleaned_data/allie_historic_parsed.rds")
-
-
 
 
 # Read in parsed inference
@@ -115,9 +112,8 @@ d_ref2 <- parsed_historic %>%
     by = "tag_id"
   ) 
 
-
 d_ref %>% 
-  filter(species == "Apantesis vittata") %>% 
+  filter(MONA %in% c(8170, 8169, 8196)) %>% 
   .$file_name -> ids
 
 # Add the two together for quicker processing
@@ -169,11 +165,9 @@ names(parsed_joined)
 
 
 
-
-
 d_final <- d_ref %>% 
   select(file_name, MONA, tag_id, date,location,month, year, doy,
-         superfamily,family,subfamily,genus,sp) %>% 
+         superfamily,family,subfamily,genus,sp, sex) %>% 
   bind_rows(
     d_ref2 %>% 
       select(file_name, MONA, tag_id, date,location,month, year, doy,
@@ -194,7 +188,6 @@ names(d_final)
 # write_csv(d_final, "cleaned_data/Allie_moth_data.csv")
 
 
-
 d_final <- read_csv("cleaned_data/Allie_moth_data.csv")
 
 
@@ -202,17 +195,17 @@ d_final %>%
   mutate(
     source = ifelse(year > 2000, "modern", "historic")
   ) %>% 
-  ggplot(aes(x = source, y = wing_length)) + 
+  ggplot(aes(x = source, y = wing_length, color = sex)) + 
   geom_boxplot() + 
   geom_point(position = "jitter") + 
   labs(x = "Collection", y = "Wing length (mm)") + 
   theme_bw() + 
-  facet_wrap(~month)
+  facet_wrap(~MONA, scales = "free")
 
 library(glmmTMB)
 
 glmmTMB(
-  wing_length ~ source + s(month), 
+  wing_length ~ source + s(month) + (1|MONA), 
   data = d_final %>% 
     mutate(
       source = ifelse(year > 2000, "modern", "historic")
