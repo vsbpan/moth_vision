@@ -545,6 +545,19 @@ to file size limitations)</p>
 /invisible
 /detectron2/custom_training</code></pre>
 </div>
+<div id="ice-box-specific-python-script-initiation" class="section level3">
+<h3>Ice box specific python script initiation</h3>
+<p>Tad’s Ice box has a slightly different launching procedure for python
+related stuff. I document the steps I took that got it to work.</p>
+<p>First, enter the right directory then active the Conda
+environment:</p>
+<pre class="bash"><code>cd ~/mothz 
+conda activate mothz</code></pre>
+<p>We want to expose the path of the correct CUDA installation:</p>
+<pre class="bash"><code>export CUDA_HOME=/usr/local/cuda</code></pre>
+<p>Now we can launch the jupyter notebook:</p>
+<pre class="bash"><code>jupyter lab</code></pre>
+</div>
 </div>
 </div>
 
