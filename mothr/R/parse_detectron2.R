@@ -134,7 +134,7 @@ import_raw_inference <- function(path_meta, path_inference){
 
 
 
-as.parsed_inference.raw_inference <- function(x){
+as.parsed_inference.raw_inference <- function(x, unregistered.ok = FALSE){
   cli::cli_progress_step("Initiating", msg_done = "Initiation complete.", msg_failed = "Initiation failed.")
   
   stopifnot(is.raw_inference(x))
@@ -142,7 +142,7 @@ as.parsed_inference.raw_inference <- function(x){
   cli::cli_progress_step("Formating image metadata", 
                          msg_done = "Image metadata formatting complete.", 
                          msg_failed = "Image metadata formatting failed.")
-  img_meta <- .format_images_engine(x$meta, x$inference)
+  img_meta <- .format_images_engine(x$meta, x$inference, unregistered.ok)
   
   img_meta <- img_meta %>% 
     cbind(
@@ -152,9 +152,13 @@ as.parsed_inference.raw_inference <- function(x){
     )
   
   
-  if("tag_id_guess" %in% names(x$meta)){
+  if(any(c("tag_id_guess_h", "tag_id_guess_m") %in% names(x$meta))){
+    f_historic <- file_is_historic(x$meta$file_name)
+    x$meta$tag_id_guess <- ifelse(f_historic, x$meta$tag_id_guess_h, x$meta$tag_id_guess_m)
     img_meta$tag_id_guess <- parse_pylist(x$meta$tag_id_guess, as.character, simplify = FALSE) %>% 
-      lapply(parse_tag_id) %>% 
+      purrr::map2(
+        ifelse(f_historic, "historic", "modern"),
+        parse_tag_id) %>% 
       do.call("c", .)
   }
   
@@ -175,7 +179,7 @@ as.parsed_inference.raw_inference <- function(x){
     dplyr::mutate(instance_id = seq_along(file_name)) %>% 
     dplyr::ungroup()
   
-  image_id <- assign_image_id(x$inference$file_name)
+  image_id <- img_meta$id[match(x$inference$file_name, img_meta$path)]
   # add up 0 padding to length 5
   id <- paste0("inst",as.numeric(gsub_element_wise("00000$", sprintf("%05d", x$inference$instance_id), image_id)))
   stopifnot(!any(duplicated(id)))
@@ -357,27 +361,47 @@ as.parsed_inference.tbl_df <- function(x, labels = c("polygon", "keypoints")){
 }
 
 
-parse_tag_id <- function(x){
-  x <- gsub("\\\\n|'| ", "", x)
-  x1 <- gsub("(?=^[A-Z]).*?(?=[0-9])","",x, perl = TRUE)
-  res <- x1[grepl("[0-9]DCR[0-9]", x1)]
-  res <- unique(res)
-  if(length(res) != 1){
-    x2 <- x[grepl("DCR.*[0-9]C[0-9]",x)][1]
-    if(length(x2) == 0){
-      return(NA_character_)
-    }
-    x2 <- strsplit(x2, "(?<=(?s).)(?=[A-Z][0-9])", perl = TRUE)[[1]]
-    x2[1] <- paste0(x2[1], stringr::str_extract(string = x2[2], "^."))
-    x2[2] <- sub("^.","", x2[2])
-    res <- paste0(x2[2], x2[1], x2[3])
-    res <- res[grepl("[0-9]DCRC[0-9]",res)]
+parse_tag_id <- function(x, type = c("modern","historic")){
+  if(match.arg(type) == "modern"){
+    x <- gsub("\\\\n|'| ", "", x)
+    # Remove anything that begins with a letter up to the first number
+    x1 <- gsub("(?=^[A-Z]).*?(?=[0-9])","",x, perl = TRUE) 
+    res <- x1[grepl("[0-9]DCR[0-9]", x1)]
+    res <- unique(res)
     if(length(res) != 1){
-      res <- unique(res)
-      res <- NA_character_
+      x2 <- x[grepl("DCR.*[0-9]C[0-9]",x)][1]
+      if(length(x2) == 0){
+        return(NA_character_)
+      }
+      x2 <- strsplit(x2, "(?<=(?s).)(?=[A-Z][0-9])", perl = TRUE)[[1]]
+      x2[1] <- paste0(x2[1], stringr::str_extract(string = x2[2], "^."))
+      x2[2] <- sub("^.","", x2[2])
+      res <- paste0(x2[2], x2[1], x2[3])
+      res <- res[grepl("[0-9]DCRC[0-9]",res)]
+      if(length(res) != 1){
+        res <- unique(res)
+        res <- NA_character_
+      }
     }
+    return(res)
+  } else {
+    x <- gsub("\\\\n|'| ", "", x)
+    # Remove anything that begins with a number up to the first letter
+    x1 <- gsub("(?=^[0-9]).*?(?=W)","",x, perl = TRUE)
+    # Remove anything that ends with a letter up to the last number 
+    x1 <- gsub("(\\d)[A-Z]*$","\\1",x1, perl = TRUE)
+    res <- x1[grepl("WPC[0-9]", x1)]
+    res <- unique(res)
+    if(length(res) != 1){
+      res <- x[grepl("WPC[0-9]", x) & 
+                 startsWith(x, "W") & 
+                 grepl("[0-9]$", x, perl = TRUE)]
+      if(length(res) != 1){
+        res <- NA_character_
+      } 
+    }
+    return(res)
   }
-  return(res)
 }
 
 

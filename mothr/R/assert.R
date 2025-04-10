@@ -1,3 +1,15 @@
+is.historic <- function(x){
+  vmisc::isTRUE_elementwise(grepl("WPC", x))
+}
+
+file_is_historic <- function(x){
+  if(any(is.na(x))){
+    cli::cli_warn("{.arg x} contains {sum(is.na(x))} NA{?s}. No garuntee the results make sense.")
+  }
+  fn <- fetch_historic_flag()$file_name
+  basename(x) %in% fn
+}
+
 is.raw_inference <- function(x){
   inherits(x, "raw_inference")
 }

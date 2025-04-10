@@ -11,7 +11,7 @@ parsed_full <- parsed_full %>%
   )
 
 
-l <- pb_par_lapply(10001:nrow(parsed_full), function(i,parsed_full){
+l <- pb_par_lapply(1:nrow(parsed_full), function(i,parsed_full){
   out <- tryCatch({
     img_path <- parsed_full$file_name[i] %>% 
       mini_moth_path(root_path = "D:/")
@@ -25,7 +25,6 @@ l <- pb_par_lapply(10001:nrow(parsed_full), function(i,parsed_full){
       select_things(c("forewing","hindwing", "body")) %>% 
       lapply(function(x){
         img[!as.pixset(x$polygon,dim_xy = dim(img)[1:2])] <- NA_real_
-        count_rgb_bin(img)
         res <- list(
           "image_id" = x$image_id,
           "instance_id" = x$instance_id,
@@ -59,259 +58,248 @@ out2 <- out %>%
       return(sum(x))
     }
   })
-
-
-out2 %>% 
-  filter(
-    thing_class != "body"
-  ) %>% 
-  gather(key = bin, value = count, `1-1-1`:`6-6-6`) %>% 
-  group_by(image_id,thing_class) %>% 
-  filter(count > 0) %>% 
-  mutate(
-    p = count / sum(count)
-  ) %>% 
-  mutate(
-    split_color_bin(bin)
-  ) %>% 
-  group_by(image_id, thing_class) %>% 
+out2 <- out2 %>% 
+  select(image_id, `1-1-1`:`6-6-6`) %>% 
+  gather(key = key, value = val, `1-1-1`:`6-6-6`) %>% 
+  group_by(image_id) %>% 
+  arrange(image_id, key) %>% 
   summarise(
-    r = mean_wt(r, p) / 6,
-    g = mean_wt(g, p) / 6,
-    b = mean_wt(b, p) / 6
-  ) -> z
-
-
-z %$% 
-  plotly::plot_ly(x = r, y = g, z = b, type = "scatter3d", size = 1, alpha = 0.3, color = thing_class) %>% 
-  plotly::layout(title = 'Mean in channel intensity', 
-                 scene = list(xaxis=list(title ="Red"),
-                              yaxis=list(title ="Green"),
-                              zaxis=list(title ="Blue")))
-
-
-
-
-w <- out2 %>% 
-  filter(
-    thing_class != "body"
+    image_id = unique(image_id),
+    val = list("val" = val)
   ) %>% 
-  gather(key = bin, value = count, `1-1-1`:`6-6-6`) %>% 
-  group_by(image_id,thing_class) %>% 
-  filter(count > 0) %>% 
+  left_join(d_ref)
+
+
+
+
+
+
+l <- pb_par_lapply(1:nrow(parsed_full), function(i,parsed_full){
+  out <- tryCatch({
+    img_path <- parsed_full$file_name[i] %>% 
+      mini_moth_path(root_path = "D:/")
+    if(!file.exists(img_path)){
+      return(NULL)
+    }
+    img <- fast_load_image(img_path)
+    
+    parsed_full$inlist[[i]] %>% 
+      as_relative() %>% 
+      select_things(c("forewing","hindwing", "body")) %>% 
+      lapply(function(x){
+        res <- list(
+          "image_id" = x$image_id,
+          "instance_id" = x$instance_id,
+          "thing_class" = x$thing_class
+        )
+        c(res, binary_count2(img, as.pixset(x, dim(img))))
+      })
+  }, error = function(e){
+    message(e$message)
+    return(NULL)
+  })
+}, cores = 4, inorder = FALSE,
+parsed_full = parsed_full)
+
+
+z <- unlist(l, FALSE) %>% 
+  do.call("bind_rows", .)
+
+saveRDS(z, "invisible/white_black_count.rds")
+
+get_p <- function(n){
+  w <- runif(n)
+  w / sum(w)
+}
+rvm <- function(s, n){
+  extraDistr::rcat(s, get_p(n))
+}
+get_margin <- function(x){
+  -diff(sort(table(x), decreasing = TRUE))
+}
+
+
+z <- z %>% 
+  mutate(n = white + black)
+
+z <- z %>% 
   mutate(
-    p = count / sum(count)
-  ) %>% 
-  filter(p > 0.01) %>% 
-  mutate(
-    p = count / sum(count)
-  ) %>% 
-  summarise(
-    H = entropy(p),
-    H_max = entropy(rep(1/length(p), length(p))),
-    n = length(p),
-    H_min = entropy(c(rep(0.01, length(p) - 1), 1 - sum(0.01 * (length(p) - 1)))),
-    H_unif = entropy_null(p, "unif"),
-    H_lnorm = entropy_null(p, "lnorm", meanlog = -2.730898,sdlog = 1.077979),
-    H_gamma = entropy_null(p, "gamma", shape = 1.022666, rate = 8.938170)
+    m = abs(white-black)
   )
 
-w %>% 
-  left_join(
-    ref_d, by = "image_id"
-  ) %>% 
-  ggplot(aes(x = n, y = H)) +
-  geom_point(alpha = 0.05, position = position_jitter(width = 0.2), size = 2, color = "grey") +
-  geom_smooth(
-    data = 
-      w %>% 
-      gather(key = "type", value = H, c(H_max, H_min:H_gamma)),
-    aes(color = type),
-    linewidth = 1.2,
-    se = FALSE, 
-    formula = y ~ s(x, bs = "tp", k = 5)
-  ) + 
-  facet_wrap(~thing_class) + 
-  geom_smooth(method = "gam", size= 2, color = "black",
-              formula = y ~ s(x, bs = "tp", k = 5)) + 
-  #scale_color_brewer(type = "qual") + 
-  theme_bw(base_size = 15) + 
-  labs(x = "Number of colors", y = "Shannon entropy", color = "Distribution")
+lapply(z$n, function(x){
+  rvm(ceiling(x/100),2) %>% get_margin()
+}) %>% 
+  do.call("c", .) -> a
 
-
-
-
-
-
-
-
-
-
-
-
-w %>% 
-  left_join(
-    ref_d, by = "image_id"
-  ) %>% 
-  filter(
-    Family %in% c("Erebidae", "Noctuidae", "Geometridae")
-  ) %>% 
-  ggplot(aes(x = n, y = H, color = Family)) +
-  geom_point() + 
-  geom_smooth(method = "gam") + 
-  facet_wrap(~thing_class)
-
-
-
-
-
-
-
-
-
-
-
-b %>% 
-  filter(MONA == "10440") %>% 
+z2 <- z %>% 
   mutate(
-    date = as.POSIXct(date, format = "%d-%B-%Y")
+    #m_pred = a
+  )
+
+z2 
+
+loghist(list(
+  "a" = a,
+  "m" = z$m
+), log.p = TRUE, scale = TRUE)
+
+
+
+z2 <- z2 %>% 
+  left_join(d_ref)
+
+z2 %>% 
+  filter(thing_class != "body") %>% 
+  filter(!is.na(genus)) %>% 
+  mutate(
+    group = family
   ) %>% 
   mutate(
-    month = lubridate::month(date)
+    mu = m/n
   ) %>% 
-  filter(
-    is.between(month, c(8, 11), TRUE)
-  ) %>% 
-  with({
-    list(
-      "infected" = body_area[ear_mites %in% c("Left", "Right","Both")],
-       "uninfected" = body_area[ear_mites %in% c("None")]
-    )
-  }) %>% 
-  vmisc::loghist(log.x = FALSE) + 
-  labs(x = "Moth body area", y = "Probability density")
-
-   
-  mutate(
-    ear_mites = ifelse(ear_mites %in% c("Left", "Right"), "one", ear_mites),
-    foo = ifelse(ear_mites == "one", 1, 0)
-  ) %>%
-  filter(ear_mites != "Both") %>% 
-  glmmTMB::glmmTMB(
-    foo ~ log(wl) + date, data= ., family = binomial()
-  ) %>% summary()
-
-
-
-  ggplot(aes(x = wl, y = ear_mites)) + 
-  geom_point(position = position_jitter(height = 0.1), alpha = 0.1) + 
-  geom_pointrange(color = "steelblue", stat = "summary", size = 1, linewidth = 2) + 
-  scale_x_log10()
-
-
-  
-
-
-
-
-
-
-z %>% filter(thing_class == "forewing") %$% 
-    plotly::plot_ly(x = r, y = g, z = b, type = "scatter3d", size = 1, alpha = 0.3, 
-                    marker = list(color = rgb(r/6, g/6, b/6, maxColorValue = 1))) %>% 
-    plotly::layout(title = 'Mean in channel intensity', 
-                   scene = list(xaxis=list(title ="Red"),
-                                yaxis=list(title ="Green"),
-                                zaxis=list(title ="Blue")))
-
-
-
-
-
-z %>% 
-  left_join(b, by = "image_id") %>% 
-  mutate(
-    date = as.POSIXct(date, format = "%d-%B-%Y")
-  ) %>% 
-  mutate(
-    month = lubridate::month(date)
-  ) %>% 
-  group_by(month) %>% 
+  group_by(group) %>% 
   summarise(
-    r = mean(r),
-    g = mean(g),
-    b = mean(b)
-  ) %$% 
-  {
-    plotly::plot_ly(x = r,y = g, z = b) %>% 
-      plotly::add_trace(mode = "lines+markers") %>% 
-      plotly::add_text(text=~as.character(month), textposition="top center")
+    mu = list(mu),
+    m = list(m),
+    #m_pred = list(m_pred/ n)
+   ) %>% 
+  select(group, mu) %>% 
+  as_named_vector() %>% 
+  keep_len(1000) %>% 
+  #plot_moments()
+  loghist(scale = TRUE, geom = "line") +
+  theme(legend.position = "none")
+
+
+calc_hist2 <- function (x, breaks, log.x, log.p, scale, delta, phi, ...) 
+{
+  x <- x[!is.na(x)]
+  if (log.x) {
+    if (scale) {
+      mu <- mean(x)
+      x <- x/mu^phi
+      p <- hist(log(x), plot = FALSE, breaks = breaks, 
+                ...)
+      d <- data.frame(x = exp(p$mids), p = p$density * 
+                        exp(p$mids)^(delta - 1))
+      attr(d, "scaling") <- list(mu = mu, phi = phi, 
+                                 delta = delta)
+    }
+    else {
+      p <- hist(log(x), plot = FALSE, breaks = breaks, 
+                ...)
+      d <- data.frame(x = exp(p$mids) / mean(x), p = p$density/exp(p$mids) * mean(x))
+    }
   }
-
-
-z %>% 
-  left_join(b, by = "image_id") %>% 
-  group_by(location, month) %>% 
-  filter(!is.na(month)) %>% 
-  tally() %>% 
-  summarise(
-    r = median(r, na.rm = TRUE),
-    g = median(g, na.rm = TRUE),
-    b = median(b, na.rm = TRUE)
-  ) %>% 
-  filter(!is.na(month)) %>% 
-  rowwise() %>% 
-  mutate(
-    hex = rgb(r/6, g/6, b/6)
-  ) %>% 
-  {
-    ggplot(.,aes(x = month, y = location)) + 
-      geom_tile(fill = .$hex)
+  else {
+    if (scale) {
+      mu <- mean(x)
+      x <- x/mu^phi
+      p <- hist(x, plot = FALSE, breaks = breaks, ...)
+      d <- data.frame(x = p$mids, p = p$density * p$mids^delta)
+      attr(d, "scaling") <- list(mu = mu, phi = phi, 
+                                 delta = delta)
+    }
+    else {
+      p <- hist(x, plot = FALSE, breaks = breaks, ...)
+      d <- data.frame(x = p$mids, p = p$density)
+    }
   }
+  if (log.p) {
+    d <- d[d$p > 0, ]
+  }
+  return(d)
+}
+
+loghist2 <- function (x, nclass = 50, by = NULL, log.p = FALSE, log.x = TRUE, 
+                      scale = FALSE, delta = 1, phi = 1, geom = c("line", 
+                                                                  "col"), linewidth = 1, distr_list = NULL, draw_distr_args = list(linewidth = linewidth, 
+                                                                                                                                   linetype = "dashed", delta = delta, phi = phi, 
+                                                                                                                                   scale = scale), hist_args = NULL, ...) 
+{
+  if (!missing(by)) {
+    nclass <- NULL
+  }
+  if (!is.null(nclass)) {
+    if (!is.null(by) && missing(by)) {
+      stop("Only one of 'nclass' or 'by' should be supplied and the other set to NULL.")
+    }
+    breaks <- nclass
+  }
+  else {
+    if (!is.null(by)) {
+      if (scale) {
+        x1 <- range(unlist(lapply(x, function(z) {
+          z/mean(z, na.rm = TRUE)^phi
+        }), TRUE, FALSE), na.rm = TRUE)
+      }
+      else {
+        x1 <- range(unlist(x, TRUE, FALSE), na.rm = TRUE)
+      }
+      if (log.x) {
+        x1 <- log(x1)
+      }
+      breaks <- seq_interval(x1, by = by, na.rm = TRUE)
+      breaks <- c(min(breaks,) - by, breaks, max(breaks) + 
+                    by)
+    }
+    else {
+      stop("Must supply 'nclass' or 'by' to set the breaks.")
+    }
+  }
+  nms <- names(x)
+  if (is.null(nms)) {
+    nms <- seq_along(x)
+  }
+  d <- lapply(seq_along(x), function(i) {
+    do.call("calc_hist2", c(list(x = x[[i]], breaks = breaks, 
+                                log.x = log.x, log.p = log.p, scale = scale, delta = delta, 
+                                phi = phi), hist_args)) %>% cbind(group = as.factor(nms[i]))
+  }) %>% do.call("rbind", .)
+  if (!log.p && length(geom) == 2) {
+    geom <- "col"
+  }
+  else {
+    geom <- match.arg(geom)
+  }
+  if (scale) {
+    x_lab <- tex("x / \\langle x \\rangle^\\phi")
+    y_lab <- tex("x^\\Delta P(x)")
+  }
+  else {
+    x_lab <- tex("x")
+    y_lab <- tex("P(x)")
+  }
+  g <- d %>% ggplot2::ggplot(ggplot2::aes(x = x, y = p)) + 
+    ggplot2::theme_bw(base_size = 15) + ggplot2::labs(x = x_lab, 
+                                                      y = y_lab)
+  if (log.x) {
+    g <- g + ggplot2::scale_x_continuous(trans = "log10", 
+                                         labels = fancy_scientificb)
+  }
+  if (log.p) {
+    g <- g + ggplot2::scale_y_continuous(trans = "log10", 
+                                         labels = fancy_scientificb)
+  }
+  if (geom == "line") {
+    g <- g + ggplot2::geom_line(aes(color = group, group = group), 
+                                linewidth = linewidth, ...)
+  }
+  if (geom == "col") {
+    g <- g + ggplot2::geom_col(aes(group = group, fill = group), 
+                               position = "dodge", ...)
+  }
+  if (!is.null(distr_list)) {
+    g <- do.call("draw_distr", c(list(g = g, distr_list = distr_list, 
+                                      x = unique(d$x)), draw_distr_args))
+  }
+  return(g)
+}
 
 
-  gather(key = channel, value = v, -month) %>% 
-  ggplot(aes(x = month, y = v, color = channel)) + 
-  geom_line(size = 1) + 
-  scale_color_manual(values = rev(c("red", "green","blue")))
 
 
 
 
 
-
-
-
-
-
-
-
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  

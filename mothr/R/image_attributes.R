@@ -33,8 +33,51 @@ img_typicality2 <- function(.df, weight, file_name, nboot = 1, n = 500, cores = 
 
 
 
+image_attribute <- function(x, attribute = c("complexity","contrast")){
+  stopifnot(is.array(x))
+  f <- function(a){
+    switch(a, 
+           "complexity" = imagefluency::img_complexity,
+           "contrast" = imagefluency::img_contrast,
+           "self_similarity" = imagefluency::img_self_similarity)
+  }
+  funs <- lapply(attribute, f)
+  
+  purrr::map(
+    funs, function(foo){
+      foo(x)
+    }
+  ) %>% 
+    do.call("c", .) %>% 
+    setNames(attribute)
+}
 
-
+LOOKL_nested <- function(x, cores = 1){
+  make_avg_moth <- function(x){
+    mat <- do.call("rbind", unlist(x, recursive = FALSE, FALSE))
+    x1 <- matrixStats::colSums2(mat)
+    x1 / sum(x1)
+  }
+  avg_dev <- function(x,avg_moth){
+    lapply(x, function(xi){
+      xi <- xi / sum(xi)
+      log(mothr::KL(avg_moth, xi))
+    }) %>% 
+      do.call("c", .) %>% 
+      mean()
+  }
+  
+  pb_par_lapply(
+    seq_along(x), 
+    FUN = function(i,z, avg_dev, make_avg_moth){
+      avg_dev(x[[i]],make_avg_moth(x[-1]))
+    }, cores = cores, 
+    z = x, 
+    avg_dev = avg_dev, 
+    make_avg_moth = make_avg_moth
+  ) %>% 
+    do.call("c", .)
+}
 
 
 

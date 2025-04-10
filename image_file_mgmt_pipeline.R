@@ -4,25 +4,34 @@ vmisc::load_all2("mothr")
 # See explanation at https://github.com/vsbpan/moth_vision/tree/main/doc/image_organization
 
 # I store everything in my `D:/` disk. You might want to change that.  
-rp <- "D:/"
+options(
+  "database_path" = "C:/"
+)
 
 # Step 1
 ## Initiate expected file tree
-init_image_dir(root_path = rp)
+init_image_dir()
 ## Move images to pending folder
-collect_images(root_path = rp)
+collect_images()
 
 # Step 2
 ## Visually inspect the photos and make corrections.
-shell(sprintf("Open %s", get_pending_path(root_path = rp)))
+shell(sprintf("Open %s", get_pending_path()))
 
 # Step 3
 ## Merge the validated photos to the database
-merge_to_database(root_path = rp)
+# Change the `historic` argument to `TRUE` is the specimens are historic specimens
+new_files <- merge_to_database(historic = FALSE)
+
+# You are probably done here if everything ran smoothly. Now please back up the entire moth_photos folder.
+
+
+#### optional ####
+
 
 # Step 4 (optional)
 ## Find the paths to the new images that you want to register
-path_to_new_files <- list.files(get_database_path(root_path = rp), 
+path_to_new_files <- list.files(get_database_path(), 
                                 full.names = TRUE, 
                                 recursive = TRUE, 
                                 ignore.case = TRUE, 

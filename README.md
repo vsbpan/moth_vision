@@ -105,8 +105,8 @@ The custom code written for this project are bundled as a pseudo simulated packa
     -   `polygon`: Polygon encoded as a n X 2 matrix of margin coordinates. This is a more efficient representation of binary masks (`pixset` objects). Has generic methods such as `print()`, `area()`, `centroid()`, `as.bbox()`, `as.pixset()`, `IOU()`, `plot()`.
     -   `keypoint`: keypoints encoded as n_keypoints X 3 matrix of keypoint coordinates and score or flag. Has generic methods such as `print()`, `plot()`.
 -   Detection instances
-    -   `instance`: One instance of object detection composed of a list of annotation geometries, instance_id, image_id, score, and thing_class. Has generic methods such as `print()`, `plot()`, `as.bbox()`, `find_things()`, `find_labels()`.
-    -   `inlist`: A list of `instance` objects associated with an image. Has generic methods such as `print()`, `[]`, `c()`, `plot()`, `as.bbox()`, `find_things()`, `find_labels()`.
+    -   `instance`: One instance of object detection composed of a list of annotation geometries, instance_id, image_id, score, and thing_class. Has generic methods such as `print()`, `plot()`, `as.bbox()`, `as.pixset()`,`find_things()`, `find_labels()`.
+    -   `inlist`: A list of `instance` objects associated with an image. Has generic methods such as `print()`, `[]`, `c()`, `plot()`, `as.bbox()`, `as.pixset()`,`find_things()`, `find_labels()`.
 -   Annotation files
     -   `raw_inference`: Raw inference file composed of the two .csv files created by *detectron2*. Can be converted to `parsed_inference` or `COCO_Json` objects.
     -   `parsed_inference`: A cleaned inference file formatted more like a COCO annotation file, but uses the nice tibble nested list function to store the `inlist` objects as entries of image metadata, which is a tibble. Supports various COCO evaluators, `bbox_evaluator()`, `mask_evaluator()`, and `keypoint_evaluator()`. This should be the primary format with which to interact with *detectron2* predictions.

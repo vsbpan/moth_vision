@@ -21,28 +21,49 @@ KL <- function(x,y, test.na = TRUE, unit = "log", est.prob = NULL){
   suppressMessages(philentropy::KL(rbind(x,y), test.na = test.na, unit = unit, est.prob = est.prob))
 }
 
-LOOKL <- function(x, n = NULL, cores = 1, ...){
+# `n` controls the sample number
+# `weight` weighs the average moth
+LOOKL <- function(x, n = NULL, weight = NULL, cores = 1, ...){
   x <- do.call("rbind", x)
   if(is.null(n)){
-    f <- function(w,i, n){
-      w[-i,,drop = FALSE]
+    if(is.null(weight)){
+      f <- function(mat,i, n, w){
+        mat[-i,,drop = FALSE]
+      }
+    } else {
+      f <- function(mat,i, n, w){
+        w[i] <- w[i] - 1
+        sweep(mat, 1, w, FUN = "*")
+      }
     }
+    
   } else {
-    f <- function(w,i, n){
-      indices <- seq_len(nrow(w))
-      w[sample(indices[-i], size = n, replace = TRUE),,drop = FALSE]
+    if(is.null(weight)){
+      f <- function(mat,i, n, w){
+        indices <- seq_len(nrow(mat))
+        mat[sample(indices[-i], size = n, replace = TRUE),,drop = FALSE]
+      }
+    } else {
+      f <- function(mat,i, n, w){
+        indices <- seq_len(nrow(mat))
+        ind2 <- sample(indices, size = n, replace = TRUE)
+        w2 <- w[ind2]
+        w2[ind2 == indices[i]] <- w2[ind2 == indices[i]] - 1
+        sweep(mat[ind2, , drop = FALSE], 1, w2, FUN = "*")
+      }
     }
   }
   pb_par_lapply(
     seq_len(nrow(x)), 
-    FUN = function(i, w, f, n){
-      x1 <- matrixStats::colSums2(f(w,i, n))
-      x2 <- w[i,,drop = FALSE]
+    FUN = function(i, mat, f, n, w){
+      x1 <- matrixStats::colSums2(f(mat,i, n, w))
+      x2 <- mat[i,,drop = FALSE]
       mothr::KL(x1 / sum(x1), x2 / sum(x2))
     }, cores = cores, ..., 
-    w = x, 
+    mat = x, 
     f = f, 
-    n = n
+    n = n,
+    w = weight
   ) %>% 
     do.call("c", .)
 }

@@ -88,6 +88,13 @@ append_family_nodes <- function(tree, taxon_info, new_taxon_info, taxon_order){
 
 get_tree2 <- function(sp_list, tree, show_grafted = FALSE, 
                       .progress = "text", dt = TRUE){
+  
+  if(!isTRUE(is.element("rtrees", rownames(installed.packages())))){
+    cli::cli_abort(c("No R package {.pkg rtrees} found installed on your computer.\n",
+                   "May try this code: \n",
+                   "{.code install.packages('rtrees', repos = c(rtrees = 'https://daijiang.r-universe.dev',CRAN = 'https://cloud.r-project.org'))}"))
+  }
+  
   taxon_lab <- c("family","genus","species")
   assert_variable_in_df(sp_list, taxon_lab)
   sp_list <- na.omit(sp_list)

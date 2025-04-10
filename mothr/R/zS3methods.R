@@ -100,6 +100,14 @@ registerS3method(genname = "as.polygon",
                  method = as.polygon.bbox)
 
 registerS3method(genname = "as.pixset", 
+                 class = "instance", 
+                 method = as.pixset.instance)
+
+registerS3method(genname = "as.pixset", 
+                 class = "inlist", 
+                 method = as.pixset.inlist)
+
+registerS3method(genname = "as.pixset", 
                  class = "polygon", 
                  method = as.pixset.polygon)
 

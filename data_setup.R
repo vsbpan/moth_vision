@@ -1,5 +1,7 @@
 vmisc::load_all2("mothr")
-
+options(
+  "database_path" = "D:"
+)
 
 parsed_full <- readRDS("cleaned_data/parsed_full.rds")
 
@@ -27,17 +29,19 @@ d_taxon <- read_csv("raw_data/MPG-Taxa_20230503.csv") %>%
 d <- rbind.fill(import_sheets("https://docs.google.com/spreadsheets/d/1-3_FM7t40Iv10BM3XLxWX0Qs__VFkVIP5Deqg0CcmUg/edit?gid=0#gid=0", "data"), 
                 import_sheets("https://docs.google.com/spreadsheets/d/1i8C-greXGMThg-0AqQRqaPMHT3KTXxR7x-QTDj5qGbE/edit?gid=0#gid=0", "data"))
 
+valid_traps <- readRDS("cleaned_data/valid_traps.rds")
+
 d <- d %>% 
-  dplyr::select(tag_id, MONA, location, date, collection_method, photo, ear_mites,light_type,notes, 
-                family, genus, species) %>%
-  mutate(
-    date = as.POSIXct(date, format = "%d-%B-%Y"),
-    month = lubridate::month(date),
-    year = lubridate::year(date),
-    doy = lubridate::yday(date)
-  ) %>% 
+  dplyr::select(tag_id, MONA, location, date, 
+                family, genus, species, sex) %>%
   rename(sp = species) %>% 
-  as_tibble()
+  as_tibble() %>% 
+  filter(
+    location %in% valid_traps
+  ) %>% 
+  mutate(
+    date = as.POSIXct(date, format = "%d-%B-%Y")
+  )
 
 # Counted not spread
 d_count <- import_sheets("https://docs.google.com/spreadsheets/d/1Y-0oaVZ2WBF3FntlgCh6pzlGc8neRGQUQIQnyeXEgd8/edit?gid=0#gid=0", sheet = "Sheet1")
@@ -54,19 +58,38 @@ d_count <- d_count %>%
   ) %>% 
   dplyr::select(
     -c(collector, species)
+  ) %>% 
+  filter(
+    location %in% valid_traps
   )
   
 # combine the spread and counted data sheets by uncounting the counted ones
 d <- d_count %>% 
   filter(!is.na(number)) %>% 
   left_join(d_taxon %>% 
-              dplyr::select(MONA, genus, sp), by = c("genus", "sp")) %>% 
+              dplyr::select(MONA, genus, sp) %>% 
+              mutate(
+                MONA = as.character(MONA)
+              ), 
+            by = c("genus", "sp")) %>% 
   uncount(number) %>% 
-  rbind.fill(d) %>% 
+  mutate(
+    tag_id = NA,
+    family = NA,
+    sex = NA
+  ) %>% 
+  select(-c(notes)) %>% 
+  rbind(d) %>% 
   as_tibble() %>% 
+  mutate(
+    month = lubridate::month(date),
+    year = lubridate::year(date),
+    doy = lubridate::yday(date)
+  ) %>% 
   rename_at(vars(family, genus, sp), function(x){paste0(x,"_guess")}) %>% 
   left_join(
-    d_taxon, by = "MONA"
+    d_taxon %>% 
+      mutate(MONA = as.character(MONA)), by = "MONA"
   ) %>% 
   mutate(
     # Fill in the taxon info if there is manual entry and no matched MONA entry. Otherwise, MONA taxon takes precedence.
@@ -116,22 +139,27 @@ d_host <- read_csv("raw_data/HOST_download.csv") %>%
     db_sp = ifelse(db_sp == 0, NA, db_sp)
   )
 
+d_col_traits <- read_csv("raw_data/species_color_traits.csv") %>% 
+  dplyr::select(species, aposematic, mimic, disruptive, complex)
 
 # Compute species level traits
 d_trait <- d %>% 
+  select(species) %>% 
+  unique() %>% 
   group_by(species) %>% 
-  summarise(number = n()) %>% 
-  mutate(
+  summarise(
     no_id = grepl(" sp", species)
   ) %>% 
-  left_join(d_host, by = "species")
+  left_join(d_host, by = "species") %>% 
+  left_join(d_col_traits, by = "species")
 
 # No longer needed
 rm("d_host")
+rm("d_col_traits")
 
 # Compute image record level meta-data
 d_ref <- parsed_full %>% 
-  dplyr::select(tag_id_guess, id, file_name, tick_size) %>% 
+  dplyr::select(tag_id_guess, id, file_name, path, tick_size) %>% 
   mutate(
     image_id = paste0("img", id),
     tag_id = tag_id_guess
@@ -163,4 +191,9 @@ phylo <- get_tree2(d_ref %>%
                     distinct(), 
                   tree$tree)
 rm("tree")
+
+
+
+
+
 

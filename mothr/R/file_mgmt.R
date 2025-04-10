@@ -106,7 +106,7 @@ parse_file_name <- function(path, keep_extn = TRUE){
 
 
 # Auto initiate the file tree if it doesn't exist. 
-init_image_dir <- function(root_path = "C:/",
+init_image_dir <- function(root_path = options("database_path")$database_path,
                            dir_name = "moth_photos",
                            subdir = c("input_photos", "pending_merge", "database", "mini_moth")){
   res <- validate_image_dir(root_path, dir_name = dir_name, subdir = subdir, create = TRUE)
@@ -116,35 +116,35 @@ init_image_dir <- function(root_path = "C:/",
 }
 
 
-get_database_path <- function(root_path = "C:/"){
+get_database_path <- function(root_path = options("database_path")$database_path){
   res <- paste(get_img_dir_path(root_path),"database", sep = "/")
   remove_dup_slash(res)
 }
 
 
-get_input_path <- function(root_path = "C:/"){
+get_input_path <- function(root_path = options("database_path")$database_path){
   res <- paste(get_img_dir_path(root_path),"input_photos", sep = "/")
   remove_dup_slash(res)
 }
 
 
-get_pending_path <- function(root_path = "C:/"){
+get_pending_path <- function(root_path = options("database_path")$database_path){
   res <- paste(get_img_dir_path(root_path),"pending_merge", sep = "/")
   remove_dup_slash(res)
 }
 
-get_img_dir_path <- function(root_path = "C:/", dir_name = "moth_photos"){
+get_img_dir_path <- function(root_path = options("database_path")$database_path, dir_name = "moth_photos"){
   res <- paste(root_path, dir_name, sep = "/")
   remove_dup_slash(res)
 }
 
-get_mini_moth_path <- function(root_path = "C:/"){
+get_mini_moth_path <- function(root_path = options("database_path")$database_path){
   res <- paste(get_img_dir_path(root_path),"mini_moth", sep = "/")
   remove_dup_slash(res)
 }
 
 
-collect_images <- function(root_path = "C:/"){
+collect_images <- function(root_path = options("database_path")$database_path){
   validate_image_dir(root_path, create = FALSE)
   
   input_path <- get_input_path(root_path)
@@ -181,7 +181,10 @@ collect_images <- function(root_path = "C:/"){
 }
 
 
-image_in_database <- function(x, root_path = "C:/", quiet = FALSE){
+image_in_database <- function(x, root_path = options("database_path")$database_path, quiet = FALSE){
+  if(missing(x)){
+    cli::cli_abort("Must supply argument {.arg x}")
+  }
   db_path <- get_database_path(root_path)
   files <- list.files(db_path, pattern = ".jpg", 
              full.names = TRUE, recursive = TRUE, ignore.case = TRUE)
@@ -198,7 +201,7 @@ image_in_database <- function(x, root_path = "C:/", quiet = FALSE){
   return(any(files_matched))
 }
 
-merge_to_database <- function(root_path = "C:/"){
+merge_to_database <- function(root_path = options("database_path")$database_path, historic = FALSE){
   db_path <- get_database_path(root_path)
   input_path <- get_input_path(root_path)
   pending_path <- get_pending_path(root_path)
@@ -262,20 +265,53 @@ merge_to_database <- function(root_path = "C:/"){
     cli::cli_abort("There seems to be {n_dup} image files in the database with the same name as the proposed new names. Something is wrong. 
     Contact admin for guidence. 
     
-    Offending entr{?es/ies}: {.file {dup}}")
+    Offending entr{?y/ies}: {.file {dup}}")
   }
   
+  cli::cli_progress_step("Double checking function settings with user. Please respond to the pop-up.", 
+                         msg_done = "Successfully retreived user confirmation.", 
+                         msg_failed = "Error in getting user confirmation."
+  )
+  
+  if(isTRUE(historic)){
+    image_type <- "historic specimens"
+  } else {
+    image_type <- "modern specimens"
+  }
+  ans <- utils::askYesNo(sprintf("These images are going to be flagged as %s. Is this correct?", image_type))
+  if(!isTRUE(ans)){
+    cli::cli_progress_done()
+    cli::cli_alert("Function settings not confirmed by user. Gracefully exiting function...")
+    return(invisible(NULL))
+  }
   
   cli::cli_progress_step("Merging {n_pending} new images to the database.", 
                          msg_done = "Successfully merged {n_pending} images to the database!", 
                          msg_failed = "Error in merging {n_pending} images to the database!"
-                         )
+  )
+  
   file.rename(
     pending_files,
     new_file_paths
   )
-
   
+  if(isTRUE(historic)){
+    try_flag <- tryCatch({
+      flag_historic_specimen(basename(new_file_paths))
+    }, error = function(e){
+      cli::cli_alert_danger(c(
+        "Something went wrong when flagging the images as historic specimens.\n",
+        "If the {.file {pending_path}} is empty, then you are probably okay. Proceed to delete everything in the {.file {input_path}}. I have returned the image file names to register as historic. Try to run {.code flag_historic_specimen(my_file_names)} to reflag.\n", 
+        "Something caused the flagging stage to fail. Error message below:\n",
+        "{e$message}"
+      ))
+      return(FALSE)
+    })
+    if(isFALSE(try_flag)){
+      return(basename(new_file_paths))
+    }
+  }
+
   # Garbage collector
   cli::cli_progress_step("Begining garbage collector", 
                          msg_done = "Done wiping {.file {pending_path}} and {.file {input_path}}!", 
@@ -295,7 +331,7 @@ merge_to_database <- function(root_path = "C:/"){
                    
                    If you are seeing this message again, contact admin for guidence. 
                    
-                   Offending entr{?es/ies}: {.file {basename(pending_files)}}")
+                   Offending entr{?y/ies}: {.file {basename(pending_files)}}")
   }
   
   # Remove directories and files
@@ -317,16 +353,25 @@ merge_to_database <- function(root_path = "C:/"){
                    
                    If you are seeing this message again, contact admin for guidence. 
                    
-                   Offending entr{?es/ies}: {.file {basename(input_files)}}")
+                   Offending entr{?y/ies}: {.file {basename(input_files)}}")
   }
+  
+  # success <- TRUE
   
   on.exit({
     cli::cli_progress_done()
     cli::cli_progress_cleanup()
+    # if(success){
+    #   p <- "C:/Users/LoPresti Lab/Pictures/new_cannon_photos/"
+    #   p2 <- "C:/Users/LoPresti Lab/Pictures/old_cannon_photos/"
+    #   cli::cli_alert("You are all set! \n Please remember to move the files in {.path {p}} to {.path {p2}}")
+    # }
   })
   
-  return(invisible(NULL))
+  return(invisible(new_file_names))
 }
+
+
 
 dir_remove <- function(x, recursive = TRUE, force = FALSE) {
   if (unlink(x, recursive, force) == 0)
@@ -340,6 +385,64 @@ remove_dup_slash <- function(x){
 }
 
 
-mini_moth_path <- function(x,root_path = "C:/"){
-  remove_dup_slash(paste(get_mini_moth_path(root_path = root_path),gsub("img_", "mini_", x), sep = "/"))
+mini_moth_path <- function(x,root_path = options("database_path")$database_path){
+  remove_dup_slash(paste(get_mini_moth_path(root_path = root_path),basename(gsub("img_", "mini_", x)), sep = "/"))
 }
+
+find_path <- function(d_ref, tag_id = NULL, image_id = NULL, file_name = NULL, mini_moth = NULL, 
+                      database_path = get_database_path()){
+  if(is.null(tag_id) & is.null(image_id) & is.null(file_name) & is.null(mini_moth)){
+    cli::cli_abort("Must supply at least one method to find the path")
+  }
+  if(!is.null(tag_id)){
+    assert_atomic_type(tag_id, "character")
+    path <- d_ref %>% 
+      filter(tag_id == {{tag_id}}) %>% 
+      .$path
+  }
+  if(!is.null(image_id)){
+    assert_atomic_type(image_id, "character")
+    if(!grepl("img", image_id)){
+      image_id <- paste0("img",image_id)
+    }
+    path <- d_ref %>% 
+      filter(image_id == {{image_id}}) %>% 
+      .$path
+  }
+  if(!is.null(file_name)){
+    assert_atomic_type(file_name, "character")
+    file_name <- basename(file_name)
+    if(tools::file_ext(file_name) == ""){
+      cli::cli_abort("Missing file extension. Cannot find the file. Do you mean {.path {paste0(file_name, '.jpg')}}?")
+    }
+    path <- d_ref %>% 
+      filter(file_name == {{file_name}}) %>% 
+      .$path
+  }
+  if(!is.null(mini_moth)){
+    assert_atomic_type(mini_moth, "character")
+    mini_moth <- basename(mini_moth)
+    if(tools::file_ext(mini_moth) == ""){
+      cli::cli_abort("Missing file extension. Cannot find the file. Do you mean {.path {paste0(mini_moth, '.jpg')}}?")
+    }
+    mini_moth <- gsub("mini_moth","img_moth",mini_moth)
+    path <- d_ref %>% 
+      filter(file_name == {{mini_moth}}) %>% 
+      .$path
+  }
+  if(length(path) == 0){
+    cli::cli_alert_danger("Cannot find the file path.")
+  }
+  fn <- basename(path)
+  dir <- basename(dirname(path))
+  path <- paste(database_path, dir, fn, sep = "/")
+  path <- remove_dup_slash(path)
+  if(any(!file.exists(path))){
+    cli::cli_alert_danger("The path does not exist on this computer.")
+  }
+  path
+}
+
+options(
+  "database_path" = "C:/"
+)

@@ -54,14 +54,19 @@ register_image_id <- function(path){
   cli::cli_alert_success("Images registered!")
 }
 
-assign_image_id <- function(path){
+assign_image_id <- function(path, unregistered.ok = FALSE){
   o <- check_image_registration(path, quiet = TRUE)
-  if(!all(o)){
-    n <- sum(!o)
-    cli::cli_abort("{n} image{?s} ha{?s/ve} not been registed. Run {.code register_image_id(path)} to register the images.")
+  if(unregistered.ok){
+    as.integer(seq_along(path) * 100000)
+  } else {
+    if(!all(o)){
+      n <- sum(!o)
+      cli::cli_abort("{n} image{?s} ha{?s/ve} not been registed. Run {.code register_image_id(path)} to register the images.")
+    }
+    database <- fetch_image_database()
+    fn <- parse_file_name(path, keep_extn = TRUE)
+    
+    as.integer(database$image_id[match(fn, database$file_name)])
   }
-  database <- fetch_image_database()
-  fn <- parse_file_name(path, keep_extn = TRUE)
   
-  as.integer(database$image_id[match(fn, database$file_name)])
 }

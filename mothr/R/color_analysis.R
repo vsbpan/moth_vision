@@ -58,8 +58,26 @@ split_color_bin <- function(x){
   as.data.frame(res)
 }
 
+binary_count <- function(img){
+  v <- c(herbivar::threshold2(imager::grayscale(img)))
+  v <- v[!is.na(v)]
+  return(
+    list("white" = sum(v), "black" = sum(!v))
+  )
+}
 
-
+binary_count2 <- function(img, mask){
+  img <- herbivar::threshold2(isoblur(grayscale(img),1), thr = "otsu") %>% 
+    imager::fill(5) %>% 
+    imager::as.cimg()
+  img[!mask] <- NA_real_
+  v <- c(img)
+  v <- v[!is.na(v)]
+  return(
+    list("white" = sum(v), "black" = sum(!v))
+  )
+  
+}
 
 
 

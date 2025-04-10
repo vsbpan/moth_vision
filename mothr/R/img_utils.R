@@ -246,3 +246,116 @@ flip_xy <- function(img){
               array = as.array)
   return(f(aperm(img, c(2, 1, 3, 4))))
 }
+
+# Evaluate a function for each height, width, and depth element shared among a set of provided objects or color spectrum arrays.
+slice_eval <- function(..., FUN) {
+  a <- abind(...)
+  out <- array(apply(a, MARGIN = c(1, 2, 3), FUN = FUN), 
+               dim = c(dim(a)[1:3],1))
+  cimg::as.cimg(out)
+}
+
+
+
+
+color_index <- function(
+    x, index = "all", plot = TRUE,
+    max_px = 500000,
+    index_path = paste(pkgload::pkg_path(vmisc::fake_pkg()), 
+                       "assets/color_index_formulas.csv", 
+                       sep = "/")
+                        ){
+  if((dim(x)[4] != 3L) || !is.cimg(x)){
+    cli::cli_abort("{.arg x} must be a {.cls cimg} object with RGB channels.")
+  }
+  
+  ind <- try(suppressMessages(readr::read_csv(index_path, progress = FALSE)))
+  if(!isTRUE(is.data.frame(ind))){
+    cli::cli_abort("Cannot find index formulas! Expected path: {.file {index_path}}.")
+  }
+  if(isTRUE(is.numeric(max_px)) && isFALSE(is.na(max_px))){
+    nr <- nrow(x)
+    nc <- ncol(x)
+    npx <- nr * nc
+    if(npx > max_px){
+      s <- max_px / npx
+      cli::cli_inform("Down scaled the image by {round(1/s, digits = 2)}")
+      x <- imager::imresize(x, scale = s)
+    }
+  }
+  
+  
+  max2 <- function(...) {
+    slice_eval(..., FUN = "max")
+  }
+  min2 <- function(...) {
+    slice_eval(..., FUN = "min")
+  }
+
+  if (any(index == "all")) {
+    index <- ind$index
+  }
+  else {
+    if (!any(index %in% ind$index)) {
+      cli::cli_abort("Invalid index selected. Try: {.val {ind$index}}")
+    }
+  }
+  iml <- lapply(seq_along(index), function(i, index) {
+    form <- ind[ind$index == index[i], "eqn"]
+    imager::imeval(x, ~eval(parse(text = form)))
+  }, index = index)
+  names(iml) <- index
+  iml <- imager::as.imlist(iml)
+  if (plot) {
+    plot.imlist(iml)
+  }
+  return(iml)
+}
+
+immask <- function (object, pixset, background = NA_real_) {
+  img.spec <- imager::spectrum(object)
+  mask.spec <- imager::spectrum(pixset)
+  if (is.character(background)) {
+    if (img.spec == 3) {
+      background <- c(grDevices::col2rgb(background))/255
+    }
+    else {
+      message("Background color taken as luminance")
+      background <- crossprod((grDevices::col2rgb(background))/255, 
+                              c(0.3, 0.59, 0.11))
+    }
+  }
+  if (img.spec == 3) {
+    if (mask.spec == 3) {
+      col.index <- c(1, 2, 3)
+      if (length(background) < 3) {
+        background <- rep(background, 3)
+      }
+    }
+    else {
+      col.index <- c(1, 1, 1)
+    }
+    object[, , , 1][pixset[, , , col.index[1]]] <- background[1]
+    object[, , , 2][pixset[, , , col.index[2]]] <- background[2]
+    object[, , , 3][pixset[, , , col.index[3]]] <- background[3]
+  }
+  else {
+    if (mask.spec > 1) {
+      warning("Only fist color channel of pixset used to subset from image.")
+    }
+    if (length(background) > 1) {
+      warning("Only first elemenet of 'background' used. ")
+    }
+    object[, , , 1][pixset[, , , 1]] <- background[1]
+  }
+  return(object)
+}
+
+max_scale <- function (object) {
+  val <- max(c(object), na.rm = TRUE)
+  return(ifelse(val > 1, 3L, 1L))
+}
+
+color_invert <- function (object) {
+  imager::imeval(object, ~max_scale(object) - .)
+}

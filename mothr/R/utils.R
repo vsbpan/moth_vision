@@ -7,11 +7,6 @@ clean_taxon_name <- function(x){
   gsub("(?![-])[[:punct:]]","",x, perl = TRUE)
 }
 
-
-launch_photo <- function(path){
-  shell(sprintf("Open %s", path))
-}
-
 drop_attributes <- function(x, exclude = NULL){
   if(is.null(exclude)){
     attributes(x) <- NULL
@@ -79,4 +74,15 @@ dist2 <- function(l, FUN, is_symmetric = TRUE, cores = 1){
   
   res <- as.dist(res, diag = TRUE, upper = TRUE)
   return(res)
+}
+
+
+insert_missing <- function(.df, n = n){
+  a <- .df %>%
+    dplyr::select(-c({{n}})) 
+  a %>% 
+    lapply(unique) %>% 
+    do.call("expand_grid", .) %>% 
+    dplyr::left_join(.df, by = names(a)) %>% 
+    dplyr::mutate(n = ifelse(is.na({{n}}), 0, {{n}}))
 }

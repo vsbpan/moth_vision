@@ -76,8 +76,9 @@ def read_text(im_cropped, tesseract_loc = 'C:/Program Files/Tesseract-OCR/tesser
     #    im_cropped = correct_text_rotation(im_cropped[20:(h - 20),20:(w - 20)], angle)
     
     generic_config = r'-c tessedit_char_whitelist=ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789abcdefghijklmnopqrstuvwxyz'
-    tag_id_config = r'-c tessedit_char_whitelist=DCR0123456789'
-
+    historic_tag_id_config = r'-c tessedit_char_whitelist=WPC0123456789'
+    modern_tag_id_config = r'-c tessedit_char_whitelist=DCR0123456789'
+    
     thr, threshed = cv2.threshold(im_cropped,0,255,cv2.THRESH_OTSU)
     result = 255 - threshed
     result = cv2.GaussianBlur(result, (5,5), 0)
@@ -86,28 +87,35 @@ def read_text(im_cropped, tesseract_loc = 'C:/Program Files/Tesseract-OCR/tesser
     text = pytesseract.image_to_string(result, config = generic_config, lang = "eng")
     
     # same as above but optimized to read DCR tags
-    tag_id_text = pytesseract.image_to_string(result, config = tag_id_config, lang = "eng")
+    modern_tag_id_text = pytesseract.image_to_string(result, config = modern_tag_id_config, lang = "eng")
     
-    return text, tag_id_text
+    # same as above but optimized to read WPC tags
+    historic_tag_id_text = pytesseract.image_to_string(result, config = historic_tag_id_config, lang = "eng")
+    
+    return text, modern_tag_id_text, historic_tag_id_text
 
 def read_img_tags(instances, image, meta_data, tesseract_loc = 'C:/Program Files/Tesseract-OCR/tesseract.exe'):
     text_generic = []
-    text_tag_id = []
+    text_tag_id_m = []
+    text_tag_id_h = []
     try: 
       res = get_tags_cropped(instances, image, meta_data)
       for i in range(len(res)):
           try: 
               # Some denoising then sharpening
-            generic_text, tag_id_text = read_text(res[i], tesseract_loc)
+            generic_text, modern_tag_id_text, historic_tag_id_text = read_text(res[i], tesseract_loc)
             text_generic.append(generic_text)
-            text_tag_id.append(tag_id_text)
+            text_tag_id_m.append(modern_tag_id_text)
+            text_tag_id_h.append(historic_tag_id_text)
           except: 
             text_generic.append("text_read_failed")
-            text_tag_id.append("text_read_failed")
+            text_tag_id_m.append("text_read_failed")
+            text_tag_id_h.append("text_read_failed")
     except: 
       text_generic.append("text_read_failed")
-      text_tag_id.append("text_read_failed")
-    return text_generic, text_tag_id
+      text_tag_id_m.append("text_read_failed")
+      text_tag_id_h.append("text_read_failed")
+    return text_generic, text_tag_id_m, text_tag_id_h
   
 def select_ruler(instances, meta_data):
     things_classes = MetadataCatalog.get(meta_data).get("thing_classes")
