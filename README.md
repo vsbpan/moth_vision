@@ -71,7 +71,6 @@ pytesseract.pytesseract.tesseract_cmd = tesseract_loc
 
 Some file manipulations may require the *ExifTool* software via the *exifr* package, but the package would ask you to install the program if it cannot be found. 
 
-
 ## Description <a name="Description"></a>
 
 ### Code libraries <a name="CodeLibraries"></a>
@@ -122,3 +121,31 @@ Currently, Git is set to ignore the following directories (mainly due to file si
 /invisible
 /detectron2/custom_training
 ```
+
+### Ice box specific python script initiation
+
+Tad's Ice box has a slightly different launching procedure for python related stuff. I document the steps I took that got it to work. 
+
+First, enter the right directory then active the Conda environment:  
+``` bash
+cd ~/mothz 
+conda activate mothz
+```
+
+We want to expose the path of the correct CUDA installation: 
+``` bash
+export CUDA_HOME=/usr/local/cuda
+```
+
+Now we can launch the jupyter notebook: 
+``` bash 
+jupyter lab
+```
+
+
+
+
+
+
+
+
