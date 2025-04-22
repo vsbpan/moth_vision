@@ -1,0 +1,244 @@
+---
+title: An R Markdown document converted from "beetle_test.ipynb"
+output: html_document
+---
+
+```{python}
+cd ..
+```
+
+```{python}
+import torch, detectron2, cv2
+!nvcc --version
+print("\nTorch CUDA version:", torch.version.cuda)
+print("\nTorch version:", torch.__version__)
+print("\ndetectron2:", detectron2.__version__)
+print("\ncv2 version:",cv2.__version__)
+```
+
+```{python}
+print("Python version: ")
+!python --version
+```
+
+```{python}
+# Some basic setup:
+# Setup detectron2 logger
+from detectron2.utils.logger import setup_logger
+setup_logger()
+import numpy as np
+import os, json, cv2, random
+from detectron2 import model_zoo
+from detectron2.engine import DefaultPredictor,DefaultTrainer
+from detectron2.config import get_cfg
+from detectron2.data import MetadataCatalog, DatasetCatalog
+from detectron2.data.datasets import register_coco_instances
+from detectron2.utils.visualizer import ColorMode,GenericMask,Visualizer
+from detectron2.structures.keypoints import heatmaps_to_keypoints
+from matplotlib import pyplot as plt
+import glob
+from detectron2.data import build_detection_test_loader
+from detectron2.evaluation import (
+    CityscapesInstanceEvaluator,
+    CityscapesSemSegEvaluator,
+    COCOEvaluator,
+    COCOPanopticEvaluator,
+    LVISEvaluator,
+    PascalVOCDetectionEvaluator,
+    SemSegEvaluator,
+    DatasetEvaluator,
+    inference_on_dataset,
+    print_csv_format,
+    verify_results,
+)
+```
+
+```{python}
+from detectron2.custom.misc import *
+from detectron2.custom.parse_ruler_tags import *
+```
+
+```{python}
+# Register datasets and populate metadata
+register_coco_instances("./detectron2/custom_training/beetle_train", {}, "./detectron2/custom_training/beetle/coco_beetle_train.json", "./coco-annotator/datasets/beetle")
+register_coco_instances("./detectron2/custom_training/beetle_test", {}, "./detectron2/custom_training/beetle/coco_beetle_test.json", "./coco-annotator/datasets/beetle")
+```
+
+```{python}
+things = ["beetle"]
+things_color = [(255, 0, 0)]
+
+MetadataCatalog.get("beetle_train").set(thing_classes=things)
+MetadataCatalog.get("beetle_train").set(thing_colors=things_color)
+
+MetadataCatalog.get("beetle_test").set(thing_classes=things)
+MetadataCatalog.get("beetle_test").set(thing_colors=things_color)
+```
+
+```{python}
+# Set model configs
+cfg = get_cfg()
+cfg.merge_from_file(model_zoo.get_config_file("COCO-Detection/faster_rcnn_R_50_FPN_3x.yaml"))
+cfg.DATASETS.TRAIN = ("beetle_train",)
+cfg.DATASETS.TEST = ("beetle_test", ) # Called test in detectron2, but is actually the validation data
+cfg.MODEL.WEIGHTS = model_zoo.get_checkpoint_url("COCO-Detection/faster_rcnn_R_50_FPN_3x.yaml")  # Let training initialize from model zoo
+cfg.DATALOADER.NUM_WORKERS = 2
+cfg.DATALOADER.FILTER_EMPTY_ANNOTATIONS = False 
+cfg.TEST.EVAL_PERIOD = 0 # Turn off COCO evluator. 
+cfg.SOLVER.IMS_PER_BATCH = 2  # This is the real "batch size" commonly known to deep learning people
+cfg.SOLVER.BASE_LR = 0.0001  
+cfg.SOLVER.MAX_ITER = 400    
+cfg.SOLVER.LR_SCHEDULER_NAME = "WarmupCosineLR"
+cfg.SOLVER.WARMUP_ITERS = 100
+cfg.MODEL.ROI_HEADS.BATCH_SIZE_PER_IMAGE = 128   # The "RoIHead batch size"
+cfg.MODEL.ROI_HEADS.NUM_CLASSES = len(things) # Change for the number of classes
+cfg.MODEL.ROI_HEADS.SCORE_THRESH_TEST = 0.03 # Set to lower?
+cfg.TEST.DETECTIONS_PER_IMAGE = 10 # Set higher to allow filtering by class later
+cfg.SOLVER.CHECKPOINT_PERIOD = 100
+cfg.MODEL.ROI_KEYPOINT_HEAD.NUM_KEYPOINTS = 0
+cfg.TEST.KEYPOINT_OKS_SIGMAS = []
+cfg.INPUT.RANDOM_FLIP = "horizontal"
+cfg.MODEL.MASK_ON = False
+cfg.MODEL.KEYPOINT_ON = False # Keypoint detection for multiple thing classes not supported by detectron2
+cfg.MODEL.ROI_KEYPOINT_HEAD.LOSS_WEIGHT = 5
+cfg.MODEL.ROI_KEYPOINT_HEAD.NORMALIZE_LOSS_BY_VISIBLE_KEYPOINTS = False
+cfg.OUTPUT_DIR = "./detectron2/custom_training/beetle/model"
+#cfg.MODEL.BACKBONE.FREEZE_AT = 0
+cfg.INPUT.MAX_SIZE_TEST = 2000
+cfg.INPUT.MAX_SIZE_TRAIN = 2000
+cfg.INPUT.MIN_SIZE_TEST = 2000
+cfg.INPUT.MIN_SIZE_TRAIN = 2000
+
+# cfg.MODEL.RPN.PRE_NMS_TOPK_TRAIN = 5000
+#cfg.MODEL.RPN.PRE_NMS_TOPK_TEST = 3000
+#cfg.MODEL.RPN.POST_NMS_TOPK_TRAIN = 2500
+#cfg.MODEL.RPN.POST_NMS_TOPK_TEST = 2000
+cfg.MODEL.RPN.NMS_THRESH = 0.9
+
+
+os.makedirs(cfg.OUTPUT_DIR, exist_ok=True)
+```
+
+```{python}
+print(cfg)
+```
+
+```{python}
+### Train model
+trainer = CustomTrainer(cfg)
+trainer.resume_or_load(resume=True)
+trainer.train()
+```
+
+```{python}
+# Look at model performance over iterations
+%load_ext tensorboard
+#%reload_ext tensorboard
+%tensorboard --logdir cfg.OUTPUT_DIR
+
+### Go to directroy to delete temp file if TensorBoard fails to launch
+# !del /S C:\Users\vsbpa\AppData\Local\Temp\.tensorboard-info
+```
+
+```{python}
+# Load fitted model as predictor
+cfg.MODEL.WEIGHTS = os.path.join(cfg.OUTPUT_DIR, "model_0000199.pth")
+cfg.MODEL.ROI_HEADS.SCORE_THRESH_TEST = 0.5  # set to 0.3 for now, but actually filtered to 0.7 in R
+predictor = DefaultPredictor(cfg)
+```
+
+```{python}
+%matplotlib inline 
+
+f = glob.glob("./coco-annotator/datasets/beetle/*")
+fi = random.choice(f)
+#fi = f[0]
+im = cv2.imread(fi)
+outputs = predictor(im)  # format is documented at https://detectron2.readthedocs.io/tutorials/models.html#model-output-format
+v = Visualizer(im[:, :, 0:3][:,:,::-1],
+                   metadata=MetadataCatalog.get("beetle_tess"), 
+                   scale=1, 
+               instance_mode=ColorMode.IMAGE_BW
+)
+outputs = filter_instance_by_classes(outputs, "beetle_test",[10]) # max detection: ['beetle']
+out = v.draw_instance_predictions(outputs)
+
+
+plt.figure(figsize = (15,15))
+plt.imshow(out.get_image()[:,:,0:3], interpolation='nearest')
+plt.title(fi)
+plt.show()
+```
+
+```{python}
+# For writing predictions
+from detectron2.custom.writing import *
+```
+
+```{python}
+from detectron2.custom.sort import *
+def reformat_instances(outputs): 
+    if len(outputs) == 0: 
+        return np.empty((0, 5))
+    dataset = []
+    for i in range(len(outputs)):
+        l = outputs.pred_boxes.tensor.tolist()[i] + [outputs.scores.tolist()[i]]
+        dataset.append(l)
+    return np.array(dataset,  dtype='float64')
+def gather_track_results(track_res):
+    data = {}
+    data["bboxes"] = track_res[:,0:4].tolist()
+    data["track_id"] = track_res[:,4].tolist()
+    return data
+def track_video(video_path, write_path, predictor, meta, max_detection):
+    video_capture = cv2.VideoCapture(video_path)
+    total_frames = int(video_capture.get(cv2.CAP_PROP_FRAME_COUNT))
+    width = int(video_capture.get(cv2.CAP_PROP_FRAME_WIDTH))
+    height = int(video_capture.get(cv2.CAP_PROP_FRAME_HEIGHT))
+    fps = video_capture.get(cv2.CAP_PROP_FPS)
+    frame_count = 0
+    dataset = []
+    mot_tracker = Sort()
+    while True:
+        success, frame = video_capture.read()
+        frame_count = frame_count + 1
+        if not success:
+            bn = os.path.splitext(os.path.basename(video_path))[0]
+            write_csv(os.path.join(write_path, bn + "_track" + ".csv"), dataset)
+            break
+        outputs = predictor(frame)
+        outputs = filter_instance_by_classes(outputs, meta, max_detection)
+        track_res = mot_tracker.update(reformat_instances(outputs))
+        data = gather_track_results(track_res)
+        data["frame"] = frame_count
+        data["width"] = width
+        data["height"] = height
+        data["fps"] = fps
+        data["path"] = video_path
+        dataset.append(data)
+        print(f"Processed frame {frame_count} out of {total_frames}. {round(frame_count/total_frames, 2) * 100} % complete                                     ", end='\r')
+        
+```
+
+```{python}
+# Perform inference on the training dataset
+write_img_inference(
+    predictor, 
+    write_path = ".",
+    name = "beetle_detection",
+    read_path = "./beetle_image_stack/", 
+    model_ver = "modelv1.0",
+    meta = "beetle_train",
+    max_detection = [10], 
+    mode = "bbox"
+    )
+```
+
+```{python}
+track_video("./AC_10out.mp4",
+           "./",
+           predictor, 
+           "beetle_train",
+           [10])
+```
+
