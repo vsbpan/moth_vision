@@ -45,7 +45,8 @@ pip install jupyterlab
 pip install opencv-contrib-python numpy matplotlib tensorflow pytesseract
 
 # I also installed some mothra dependencies but that is not required.
-# see `detectron2/requirements.txt`
+# see `detectron2/requirements.txt` for detectron2 requirements
+# see `detectron2/SORT_requirements.txt` for SORT requirements (beetle tracking stuff)
 ```
 
 To do anything with python using the jupyter notebooks, run
