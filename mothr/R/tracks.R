@@ -53,7 +53,7 @@ parse_pytracks <- function(x){
     "height" = x$height,
     "width" = x$width,
     "fps" = x$fps,
-    "num_annotaitons" = nanno, 
+    "num_annotations" = nanno, 
     "inlist" =  inl
   )
   
@@ -61,6 +61,7 @@ parse_pytracks <- function(x){
 }
 
 format_tracks <- function(x, min_detections = 100){
+  cli::cli_alert("Removed beetles with fewer than {min_detections} detection{?s}.")
   tracks <- x$inlist %>% 
     lapply(function(w){
       lapply(w, function(y){

@@ -25,6 +25,30 @@ select_things <- function(x, things = c("body", "forewing", "hindwing", "color_c
   as.inlist(res)
 }
 
+select_side <- function(x, side = c("left", "right")){
+  side <- match.arg(side, several.ok = FALSE)
+  center <- centroid(moth_bbox(x))[1]
+  if(side == "left"){
+    f <- function(x, y){
+      x < y
+    }
+  } else {
+    f <- function(x, y){
+      x > y
+    }
+  }
+  keep_i <- do.call("c", lapply(x, function(z){
+    if(find_things(z) %in% c("forewing", "hindwing")){
+      f(centroid(as.bbox(z))[1], center)
+    } else {
+      TRUE
+    }
+  }))
+  res <- x[keep_i]
+  attr(res, "offset") <- attr(x, "offset")
+  as.inlist(res)
+}
+
 
 as.instance.list <- function(x){
   stopifnot(is.list(x))

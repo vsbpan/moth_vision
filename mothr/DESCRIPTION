@@ -18,7 +18,6 @@ Depends:
 Imports:
     doSNOW,
     foreach,
-    imagerExtra,
     insight,
     matrixStats,
     jsonlite,
@@ -39,5 +38,6 @@ Suggests:
     ggpmisc,
     raster,
     rtrees,
-    ape
+    ape,
+    imagerExtra
 

@@ -235,7 +235,13 @@ write_jpg <- function(x, file_path, transform = TRUE){
 as.bmp <- function(x){
   x <- imager::as.cimg(x)
   dim(x) <- dim(x)[-3]
-  x
+  as.array(x)
+}
+
+as.cimg_color <- function(img, n = 3){
+  imager::imappend(imlist = lapply(seq_len(n), function(x) img) %>% 
+                     imager::as.imlist(), axis = "c") %>% 
+    imager::as.cimg()
 }
 
 # Flip x and y axes
@@ -312,6 +318,25 @@ color_index <- function(
   return(iml)
 }
 
+
+resize2target <- function(img,final_dim){
+  dim_xy <- dim(img)[1:2]
+  r <- (dim_xy/final_dim)
+  ind <- which.max(r)
+  if(ind == 1){
+    s <- dim_xy[2] / r[1]
+    delta <- (final_dim[2] - s) * r[1]
+    axes <- "y"
+  } else {
+    s <- dim_xy[1] / r[2]
+    delta <- (final_dim[1] - s) * r[2]
+    axes <- "x"
+  }
+  img <- imager::pad(img, delta, axes = axes, val = c(0,0,0))
+  imager::resize(img, size_x = final_dim[1], size_y = final_dim[2])
+}
+
+
 immask <- function (object, pixset, background = NA_real_) {
   img.spec <- imager::spectrum(object)
   mask.spec <- imager::spectrum(pixset)
@@ -359,3 +384,6 @@ max_scale <- function (object) {
 color_invert <- function (object) {
   imager::imeval(object, ~max_scale(object) - .)
 }
+
+
+

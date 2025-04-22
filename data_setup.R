@@ -57,7 +57,7 @@ d_count <- d_count %>%
     sp = gsub(".* ", "", species)
   ) %>% 
   dplyr::select(
-    -c(collector, species)
+    -c(sorter, species)
   ) %>% 
   filter(
     location %in% valid_traps
