@@ -58,7 +58,7 @@ dist2 <- function(l, FUN, is_symmetric = TRUE, cores = 1){
   } else {
     grid <- expand.grid(seq_along(l), seq_along(l))
     n2 <- n^2
-    res <- lapply(seq_len(nrow(grid)), function(i, grid){
+    res <- pb_par_lapply(seq_len(nrow(grid)), function(i, grid){
       FUN(
         l[[grid[i,1]]],l[[grid[i,2]]]
       )
