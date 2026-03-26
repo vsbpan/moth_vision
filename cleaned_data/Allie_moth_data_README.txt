@@ -24,5 +24,5 @@ tick_size: ruler tick size in pixels / mm
 *_hue: The average hue value (ranges from 0-1) of pixels of body part (*: body, forewing, hindwing, not including the black parts. If there are two body parts (i.e., left, right), then the average of the two is returned.
 *_saturation: The average saturation value (ranges from 0-1) of pixels of body part (*: body, forewing, hindwing, not including the black parts. If there are two body parts (i.e., left, right), then the average of the two is returned.
 *_value: The average brightness value (ranges from 0-1) of pixels of body part (*: body, forewing, hindwing, not including the black parts. If there are two body parts (i.e., left, right), then the average of the two is returned.
-*_hex: The average hex code value (ranges from 0-1) of pixels of body part (*: body, forewing, hindwing, not including the black parts. If there are two body parts (i.e., left, right), then the average of the two is returned.
+*_hex: The average hex code value of pixels of body part (*: body, forewing, hindwing, not including the black parts. If there are two body parts (i.e., left, right), then the average of the two is returned.
 wing_length: wing length in mm (*: body, forewing, hindwing). If there are two body parts (i.e., left, right), then the maximum of the two is returned.
