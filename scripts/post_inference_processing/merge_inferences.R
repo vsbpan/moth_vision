@@ -1,40 +1,21 @@
 vmisc::load_all2("mothr")
 
-list.files("inference", pattern = "all_batches/batch_[0-9][0-9]_image_meta_mask.csv", full.names = TRUE) %>% 
-  lapply(read_csv) %>% 
-  do.call("rbind", .) %>% 
-  write_csv("inference/all_batches_image_meta_mask.csv")
+batches <- list.files("inference/all_batches", pattern = "batch_[0-9][0-9]_image_meta_mask", full.names = TRUE) %>% 
+  basename() %>% 
+  drop_extn() %>% 
+  gsub("_image_meta_mask","",.)
 
 
-list.files("inference", pattern = "all_batches/batch_[0-9][0-9]_inference_mask.csv", full.names = TRUE) %>% 
-  lapply(read_csv) %>% 
-  do.call("rbind", .) %>% 
-  write_csv("inference/all_batches_inference_mask.csv")
+lapply(batches[1:2], function(b){
+  root <- "inference/all_batches/"
+  kp_meta_path <- sprintf("%s%s_image_meta_keypoint.csv", root, b)
+  kp_inf_path <- sprintf("%s%s_inference_keypoint.csv", root, b)
+  msk_meta_path <- sprintf("%s%s_image_meta_mask.csv", root, b)
+  msk_inf_path <- sprintf("%s%s_inference_mask.csv", root, b)
+  pkp <- as.parsed_inference(import_raw_inference(kp_meta_path,kp_inf_path))
+  pmsk <- as.parsed_inference(import_raw_inference(msk_meta_path,msk_inf_path))
+  pmerged <- merge_parsed_inference(pmsk, pkp)
+  readr::write_rds(pmerged, sprintf("cleaned_data/all_batches/%s_parsed_inference.rds", b), compress = "xz", compression = 9L)
+  return(NULL)
+})
 
-
-
-list.files("inference", pattern = "all_batches/batch_[0-9][0-9]_image_meta_keypoint.csv", full.names = TRUE) %>% 
-  lapply(read_csv) %>% 
-  do.call("rbind", .) %>% 
-  write_csv("inference/all_batches_image_meta_keypoint.csv")
-
-
-list.files("inference", pattern = "all_batches/batch_[0-9][0-9]_inference_keypoint.csv", full.names = TRUE) %>% 
-  lapply(read_csv) %>% 
-  do.call("rbind", .) %>% 
-  write_csv("inference/all_batches_inference_keypoint.csv")
-
-
-
-d <- import_raw_inference(path_meta = "inference/full_mothz_sample1_image_meta_mask.csv", 
-                          path_inference = "inference/full_mothz_sample1_inference_mask.csv")
-
-
-d2 <- import_raw_inference(path_meta = "inference/full_mothz_sample1_image_meta_keypoint.csv", 
-                           path_inference = "inference/full_mothz_sample1_inference_keypoint.csv")
-
-parsed_mask <- as.parsed_inference(d)
-parsed_kp <- as.parsed_inference(d2)
-
-
-parsed_full <- merge_parsed_inference(parsed_mask, parsed_kp)

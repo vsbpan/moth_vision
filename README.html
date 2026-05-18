@@ -448,8 +448,89 @@ latter mode allows newly recompiled C++ code to be included in the
 package, but copies the .dll file for each time it is initiated, which
 can cause memory overflow, especially in multi-session parallel
 computing.</p>
-<div id="structure" class="section level5">
-<h5>Structure</h5>
+<div id="key-objects" class="section level5">
+<h5>Key objects</h5>
+<ul>
+<li>Image representations
+<ul>
+<li><code>cimg</code>: RGB image tensor array from <em>imager</em> that
+represents an image in R. Can be used with functions from
+<em>imager</em>, <em>imagerExtra</em>, and <em>mothr</em>.</li>
+<li><code>pixset</code>: Binary image tensor array from <em>imager</em>
+that represents binary masks in R. Can be used with functions from
+<em>imager</em>, <em>imagerExtra</em>, and <em>mothr</em>. Generic
+methods implemented in <em>mothr</em> include <code>plot()</code>,
+<code>area()</code>, <code>centroid()</code>, <code>as.polygon()</code>,
+<code>IOU()</code>.</li>
+<li><code>imlist</code>: A list of <code>cimg</code> or
+<code>pixset</code> objects.</li>
+</ul></li>
+<li>Annotation geometries
+<ul>
+<li><code>bbox</code>: Bounding box encoded as a 2 X 2 matrix of lower
+left and top right corner coordinates. Has generic methods such as
+<code>print()</code>, <code>area()</code>, <code>centroid()</code>,
+<code>as.polygon()</code>, <code>as.pixset()</code>, <code>IOU()</code>,
+<code>plot()</code>.</li>
+<li><code>polygon</code>: Polygon encoded as a n X 2 matrix of margin
+coordinates. This is a more efficient representation of binary masks
+(<code>pixset</code> objects). Has generic methods such as
+<code>print()</code>, <code>area()</code>, <code>centroid()</code>,
+<code>as.bbox()</code>, <code>as.pixset()</code>, <code>IOU()</code>,
+<code>plot()</code>.</li>
+<li><code>keypoint</code>: keypoints encoded as n_keypoints X 3 matrix
+of keypoint coordinates and score or flag. Has generic methods such as
+<code>print()</code>, <code>plot()</code>.</li>
+</ul></li>
+<li>Detection instances
+<ul>
+<li><code>instance</code>: One instance of object detection composed of
+a list of annotation geometries, instance_id, image_id, score, and
+thing_class. Has generic methods such as <code>print()</code>,
+<code>plot()</code>, <code>as.bbox()</code>,
+<code>as.pixset()</code>,<code>find_things()</code>,
+<code>find_labels()</code>.</li>
+<li><code>inlist</code>: A list of <code>instance</code> objects
+associated with an image. Has generic methods such as
+<code>print()</code>, <code>[]</code>, <code>c()</code>,
+<code>plot()</code>, <code>as.bbox()</code>,
+<code>as.pixset()</code>,<code>find_things()</code>,
+<code>find_labels()</code>.</li>
+</ul></li>
+<li>Annotation files
+<ul>
+<li><code>raw_inference</code>: Raw inference file composed of the two
+.csv files created by <em>detectron2</em>. Can be converted to
+<code>parsed_inference</code> or <code>COCO_Json</code> objects.</li>
+<li><code>parsed_inference</code>: A cleaned inference file formatted
+more like a COCO annotation file, but uses the nice tibble nested list
+function to store the <code>inlist</code> objects as entries of image
+metadata, which is a tibble. Supports various COCO evaluators,
+<code>bbox_evaluator()</code>, <code>mask_evaluator()</code>, and
+<code>keypoint_evaluator()</code>. This should be the primary format
+with which to interact with <em>detectron2</em> predictions.</li>
+<li><code>COCO_Json</code>: A list of data.frames and lists that
+represents a COCO annotation file. This is the file format that COCO
+annotator would take. Has functions for <code>import_COCO()</code>,
+<code>export_COCO()</code>, <code>split_COCO()</code>,
+<code>merge_COCO()</code>, <code>sample_COCO()</code>,
+<code>subset_COCO()</code>, <code>wipe_annotations_COCO()</code>,
+<code>update_manual_COCO()</code>, <code>set_new_path_COCO()</code>,
+<code>as.parsed_inference()</code>,<code>print()</code>, and
+<code>summary()</code>.</li>
+</ul></li>
+</ul>
+</div>
+</div>
+</div>
+<div id="file-structure" class="section level3">
+<h3>File structure <a name="FileStructure"></a></h3>
+<p>Currently, Git is set to ignore the following directories (mainly due
+to file size limitations)</p>
+<pre class="bash"><code>/coco-annotator/datasets
+/graphs
+/invisible
+/detectron2/custom_training</code></pre>
 <ul>
 <li><code>mothr/</code> The root directory of the <em>mothr</em>
 package. <code>.R</code> files in this directory are not loaded in the
@@ -548,89 +629,36 @@ raw inferences for all batches</li>
 <li><code>README.md</code> The thing that you are reading right now</li>
 </ul>
 </div>
-<div id="key-objects" class="section level5">
-<h5>Key objects</h5>
-<ul>
-<li>Image representations
-<ul>
-<li><code>cimg</code>: RGB image tensor array from <em>imager</em> that
-represents an image in R. Can be used with functions from
-<em>imager</em>, <em>imagerExtra</em>, and <em>mothr</em>.</li>
-<li><code>pixset</code>: Binary image tensor array from <em>imager</em>
-that represents binary masks in R. Can be used with functions from
-<em>imager</em>, <em>imagerExtra</em>, and <em>mothr</em>. Generic
-methods implemented in <em>mothr</em> include <code>plot()</code>,
-<code>area()</code>, <code>centroid()</code>, <code>as.polygon()</code>,
-<code>IOU()</code>.</li>
-<li><code>imlist</code>: A list of <code>cimg</code> or
-<code>pixset</code> objects.</li>
-</ul></li>
-<li>Annotation geometries
-<ul>
-<li><code>bbox</code>: Bounding box encoded as a 2 X 2 matrix of lower
-left and top right corner coordinates. Has generic methods such as
-<code>print()</code>, <code>area()</code>, <code>centroid()</code>,
-<code>as.polygon()</code>, <code>as.pixset()</code>, <code>IOU()</code>,
-<code>plot()</code>.</li>
-<li><code>polygon</code>: Polygon encoded as a n X 2 matrix of margin
-coordinates. This is a more efficient representation of binary masks
-(<code>pixset</code> objects). Has generic methods such as
-<code>print()</code>, <code>area()</code>, <code>centroid()</code>,
-<code>as.bbox()</code>, <code>as.pixset()</code>, <code>IOU()</code>,
-<code>plot()</code>.</li>
-<li><code>keypoint</code>: keypoints encoded as n_keypoints X 3 matrix
-of keypoint coordinates and score or flag. Has generic methods such as
-<code>print()</code>, <code>plot()</code>.</li>
-</ul></li>
-<li>Detection instances
-<ul>
-<li><code>instance</code>: One instance of object detection composed of
-a list of annotation geometries, instance_id, image_id, score, and
-thing_class. Has generic methods such as <code>print()</code>,
-<code>plot()</code>, <code>as.bbox()</code>,
-<code>as.pixset()</code>,<code>find_things()</code>,
-<code>find_labels()</code>.</li>
-<li><code>inlist</code>: A list of <code>instance</code> objects
-associated with an image. Has generic methods such as
-<code>print()</code>, <code>[]</code>, <code>c()</code>,
-<code>plot()</code>, <code>as.bbox()</code>,
-<code>as.pixset()</code>,<code>find_things()</code>,
-<code>find_labels()</code>.</li>
-</ul></li>
-<li>Annotation files
-<ul>
-<li><code>raw_inference</code>: Raw inference file composed of the two
-.csv files created by <em>detectron2</em>. Can be converted to
-<code>parsed_inference</code> or <code>COCO_Json</code> objects.</li>
-<li><code>parsed_inference</code>: A cleaned inference file formatted
-more like a COCO annotation file, but uses the nice tibble nested list
-function to store the <code>inlist</code> objects as entries of image
-metadata, which is a tibble. Supports various COCO evaluators,
-<code>bbox_evaluator()</code>, <code>mask_evaluator()</code>, and
-<code>keypoint_evaluator()</code>. This should be the primary format
-with which to interact with <em>detectron2</em> predictions.</li>
-<li><code>COCO_Json</code>: A list of data.frames and lists that
-represents a COCO annotation file. This is the file format that COCO
-annotator would take. Has functions for <code>import_COCO()</code>,
-<code>export_COCO()</code>, <code>split_COCO()</code>,
-<code>merge_COCO()</code>, <code>sample_COCO()</code>,
-<code>subset_COCO()</code>, <code>wipe_annotations_COCO()</code>,
-<code>update_manual_COCO()</code>, <code>set_new_path_COCO()</code>,
-<code>as.parsed_inference()</code>,<code>print()</code>, and
-<code>summary()</code>.</li>
-</ul></li>
-</ul>
+<div id="general-workflow" class="section level3">
+<h3>General workflow</h3>
+<div id="inference-on-new-photos" class="section level4">
+<h4>Inference on new photos</h4>
+<ol style="list-style-type: decimal">
+<li>Run
+<code>scripts/training_and_inference/model_v1_kp_train.ipynb</code> and
+<code>scripts/training_and_inference/model_v1_mask_train.ipynb</code> on
+new photos in the image database <code>./moth_photos/database/</code>.
+The new raw inference files should be written in
+<code>inference/all_batches/</code>.</li>
+<li>Run the following,</li>
+</ol>
+<pre class="r"><code>parsed_mask &lt;- import_raw_inference(path_meta = &quot;inference/batch_*_image_meta_mask.csv&quot;, 
+                          path_inference = &quot;inference/batch_*_inference_mask.csv&quot;) %&gt;% 
+                    as.parsed_inference()
+parsed_kp &lt;- import_raw_inference(path_meta = &quot;inference/batch_*_image_meta_keypoint.csv&quot;, 
+                           path_inference = &quot;inference/batch_*_inference_keypoint.csv&quot;) %&gt;% 
+                    as.parsed_inference()
+
+my_object &lt;- merge_parsed_inference(parsed_mask, parsed_kp)</code></pre>
+<p>The <code>my_object</code> is a <code>parsed_inference</code> object
+that can then be used for further analyses.</p>
+<ol start="3" style="list-style-type: decimal">
+<li>For analysis of images in R, it is faster to work with the cached
+mini moth files, which are generated from the original image cropped at
+the bounding box. Run <code>scripts/cleaning/mini_moth.R</code> to make
+those files.</li>
+</ol>
 </div>
-</div>
-</div>
-<div id="file-structure" class="section level3">
-<h3>File structure <a name="FileStructure"></a></h3>
-<p>Currently, Git is set to ignore the following directories (mainly due
-to file size limitations)</p>
-<pre class="bash"><code>/coco-annotator/datasets
-/graphs
-/invisible
-/detectron2/custom_training</code></pre>
 </div>
 <div id="ice-box-specific-python-script-initiation" class="section level3">
 <h3>Ice box specific python script initiation</h3>

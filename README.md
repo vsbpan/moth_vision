@@ -86,7 +86,33 @@ This is a fork from the *detectron2* package released by facebook. I've tried to
 
 The custom code written for this project are bundled as a pseudo simulated package *mothr*. It can be imported using `vmisc::load_all2("mothr")`, or `pkgload::load_all("mothr")` to enter developer mode. The latter mode allows newly recompiled C++ code to be included in the package, but copies the .dll file for each time it is initiated, which can cause memory overflow, especially in multi-session parallel computing.
 
-##### Structure
+##### Key objects
+
+-   Image representations
+    -   `cimg`: RGB image tensor array from *imager* that represents an image in R. Can be used with functions from *imager*, *imagerExtra*, and *mothr*.
+    -   `pixset`: Binary image tensor array from *imager* that represents binary masks in R. Can be used with functions from *imager*, *imagerExtra*, and *mothr*. Generic methods implemented in *mothr* include `plot()`, `area()`, `centroid()`, `as.polygon()`, `IOU()`.
+    -   `imlist`: A list of `cimg` or `pixset` objects.
+-   Annotation geometries
+    -   `bbox`: Bounding box encoded as a 2 X 2 matrix of lower left and top right corner coordinates. Has generic methods such as `print()`, `area()`, `centroid()`, `as.polygon()`, `as.pixset()`, `IOU()`, `plot()`.
+    -   `polygon`: Polygon encoded as a n X 2 matrix of margin coordinates. This is a more efficient representation of binary masks (`pixset` objects). Has generic methods such as `print()`, `area()`, `centroid()`, `as.bbox()`, `as.pixset()`, `IOU()`, `plot()`.
+    -   `keypoint`: keypoints encoded as n_keypoints X 3 matrix of keypoint coordinates and score or flag. Has generic methods such as `print()`, `plot()`.
+-   Detection instances
+    -   `instance`: One instance of object detection composed of a list of annotation geometries, instance_id, image_id, score, and thing_class. Has generic methods such as `print()`, `plot()`, `as.bbox()`, `as.pixset()`,`find_things()`, `find_labels()`.
+    -   `inlist`: A list of `instance` objects associated with an image. Has generic methods such as `print()`, `[]`, `c()`, `plot()`, `as.bbox()`, `as.pixset()`,`find_things()`, `find_labels()`.
+-   Annotation files
+    -   `raw_inference`: Raw inference file composed of the two .csv files created by *detectron2*. Can be converted to `parsed_inference` or `COCO_Json` objects.
+    -   `parsed_inference`: A cleaned inference file formatted more like a COCO annotation file, but uses the nice tibble nested list function to store the `inlist` objects as entries of image metadata, which is a tibble. Supports various COCO evaluators, `bbox_evaluator()`, `mask_evaluator()`, and `keypoint_evaluator()`. This should be the primary format with which to interact with *detectron2* predictions.
+    -   `COCO_Json`: A list of data.frames and lists that represents a COCO annotation file. This is the file format that COCO annotator would take. Has functions for `import_COCO()`, `export_COCO()`, `split_COCO()`, `merge_COCO()`, `sample_COCO()`, `subset_COCO()`, `wipe_annotations_COCO()`, `update_manual_COCO()`, `set_new_path_COCO()`, `as.parsed_inference()`,`print()`, and `summary()`.
+
+### File structure <a name="FileStructure"></a>
+
+Currently, Git is set to ignore the following directories (mainly due to file size limitations)
+``` bash
+/coco-annotator/datasets
+/graphs
+/invisible
+/detectron2/custom_training
+```
 
 -   `mothr/` The root directory of the *mothr* package. `.R` files in this directory are not loaded in the package.
     -   `mothr/R/` Contains the R source code
@@ -130,34 +156,26 @@ The custom code written for this project are bundled as a pseudo simulated packa
     -   `training_and_inference/` Some scripts for training the *detectron2* model and performing inference
 -   `README.md` The thing that you are reading right now
 
-##### Key objects
+### General workflow
+#### Inference on new photos
+1. Run `scripts/training_and_inference/model_v1_kp_train.ipynb` and `scripts/training_and_inference/model_v1_mask_train.ipynb` on new photos in the image database `./moth_photos/database/`. The new raw inference files should be written in `inference/all_batches/`. 
+2. Run the following, 
 
--   Image representations
-    -   `cimg`: RGB image tensor array from *imager* that represents an image in R. Can be used with functions from *imager*, *imagerExtra*, and *mothr*.
-    -   `pixset`: Binary image tensor array from *imager* that represents binary masks in R. Can be used with functions from *imager*, *imagerExtra*, and *mothr*. Generic methods implemented in *mothr* include `plot()`, `area()`, `centroid()`, `as.polygon()`, `IOU()`.
-    -   `imlist`: A list of `cimg` or `pixset` objects.
--   Annotation geometries
-    -   `bbox`: Bounding box encoded as a 2 X 2 matrix of lower left and top right corner coordinates. Has generic methods such as `print()`, `area()`, `centroid()`, `as.polygon()`, `as.pixset()`, `IOU()`, `plot()`.
-    -   `polygon`: Polygon encoded as a n X 2 matrix of margin coordinates. This is a more efficient representation of binary masks (`pixset` objects). Has generic methods such as `print()`, `area()`, `centroid()`, `as.bbox()`, `as.pixset()`, `IOU()`, `plot()`.
-    -   `keypoint`: keypoints encoded as n_keypoints X 3 matrix of keypoint coordinates and score or flag. Has generic methods such as `print()`, `plot()`.
--   Detection instances
-    -   `instance`: One instance of object detection composed of a list of annotation geometries, instance_id, image_id, score, and thing_class. Has generic methods such as `print()`, `plot()`, `as.bbox()`, `as.pixset()`,`find_things()`, `find_labels()`.
-    -   `inlist`: A list of `instance` objects associated with an image. Has generic methods such as `print()`, `[]`, `c()`, `plot()`, `as.bbox()`, `as.pixset()`,`find_things()`, `find_labels()`.
--   Annotation files
-    -   `raw_inference`: Raw inference file composed of the two .csv files created by *detectron2*. Can be converted to `parsed_inference` or `COCO_Json` objects.
-    -   `parsed_inference`: A cleaned inference file formatted more like a COCO annotation file, but uses the nice tibble nested list function to store the `inlist` objects as entries of image metadata, which is a tibble. Supports various COCO evaluators, `bbox_evaluator()`, `mask_evaluator()`, and `keypoint_evaluator()`. This should be the primary format with which to interact with *detectron2* predictions.
-    -   `COCO_Json`: A list of data.frames and lists that represents a COCO annotation file. This is the file format that COCO annotator would take. Has functions for `import_COCO()`, `export_COCO()`, `split_COCO()`, `merge_COCO()`, `sample_COCO()`, `subset_COCO()`, `wipe_annotations_COCO()`, `update_manual_COCO()`, `set_new_path_COCO()`, `as.parsed_inference()`,`print()`, and `summary()`.
+``` R
+parsed_mask <- import_raw_inference(path_meta = "inference/batch_*_image_meta_mask.csv", 
+                          path_inference = "inference/batch_*_inference_mask.csv") %>% 
+                    as.parsed_inference()
+parsed_kp <- import_raw_inference(path_meta = "inference/batch_*_image_meta_keypoint.csv", 
+                           path_inference = "inference/batch_*_inference_keypoint.csv") %>% 
+                    as.parsed_inference()
 
-### File structure <a name="FileStructure"></a>
-
-
-Currently, Git is set to ignore the following directories (mainly due to file size limitations)
-``` bash
-/coco-annotator/datasets
-/graphs
-/invisible
-/detectron2/custom_training
+my_object <- merge_parsed_inference(parsed_mask, parsed_kp)
 ```
+
+The `my_object` is a `parsed_inference` object that can then be used for further analyses. 
+
+3. For analysis of images in R, it is faster to work with the cached mini moth files, which are generated from the original image cropped at the bounding box. Run `scripts/cleaning/mini_moth.R` to make those files.  
+
 
 ### Ice box specific python script initiation
 
