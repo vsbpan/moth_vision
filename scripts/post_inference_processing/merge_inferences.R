@@ -6,7 +6,7 @@ batches <- list.files("inference/all_batches", pattern = "batch_[0-9][0-9]_image
   gsub("_image_meta_mask","",.)
 
 
-lapply(batches[1:2], function(b){
+lapply(batches, function(b){
   root <- "inference/all_batches/"
   kp_meta_path <- sprintf("%s%s_image_meta_keypoint.csv", root, b)
   kp_inf_path <- sprintf("%s%s_inference_keypoint.csv", root, b)

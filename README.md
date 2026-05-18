@@ -3,14 +3,19 @@
 ## Table of Contents
 
 1.  [Overview](#Overview)
-2.  [Installation](#Installation)
-3.  [Description](#Description)
+2.  [License & usage](#License)
+3.  [Installation](#Installation)
+4.  [Description](#Description)
     -   [Code libraries](#CodeLibraries)
     -   [File structure](#FileStructure)
 
 ## Overview <a name="Overview"></a>
 
 This repo hosts code for misc computer vision stuff for Eric's moth collections
+
+## License & usage <a name="License"></a>
+
+The code in this repo is licensed under GNU GPLv3. The data belong to Eric LoPresti (University of South Carolina). Contact Eric LoPresti for any use of data in this repo. 
 
 ## Installation <a name="Installation"></a>
 

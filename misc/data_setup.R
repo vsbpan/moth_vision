@@ -26,8 +26,8 @@ d_taxon <- read_csv("raw_data/MPG-Taxa_20230503.csv") %>%
 
 
 # Pull partial data for ones with assigned tag ID
-d <- rbind.fill(import_sheets("https://docs.google.com/spreadsheets/d/1-3_FM7t40Iv10BM3XLxWX0Qs__VFkVIP5Deqg0CcmUg/edit?gid=0#gid=0", "data"), 
-                import_sheets("https://docs.google.com/spreadsheets/d/1i8C-greXGMThg-0AqQRqaPMHT3KTXxR7x-QTDj5qGbE/edit?gid=0#gid=0", "data"))
+d <- rbind.fill(import_sheets(LINK, "data"), 
+                import_sheets(LINK, "data"))
 
 valid_traps <- readRDS("cleaned_data/valid_traps.rds")
 
@@ -44,7 +44,7 @@ d <- d %>%
   )
 
 # Counted not spread
-d_count <- import_sheets("https://docs.google.com/spreadsheets/d/1Y-0oaVZ2WBF3FntlgCh6pzlGc8neRGQUQIQnyeXEgd8/edit?gid=0#gid=0", sheet = "Sheet1")
+d_count <- import_sheets(LINK, sheet = "Sheet1")
 
 d_count <- d_count %>% 
   mutate(
