@@ -20,3 +20,4 @@ inference/all_batches_image_meta_keypoint.csv
 inference/all_batches_inference_keypoint.csv
 /beetle_stuff/beetle_image_stack
 /beetle_stuff/*.mp4
+/hesperis
