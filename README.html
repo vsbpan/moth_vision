@@ -403,7 +403,8 @@ pip install jupyterlab
 pip install opencv-contrib-python numpy matplotlib tensorflow pytesseract
 
 # I also installed some mothra dependencies but that is not required.
-# see `detectron2/requirements.txt`</code></pre>
+# see `detectron2/requirements.txt` for detectron2 requirements
+# see `detectron2/SORT_requirements.txt` for SORT requirements (beetle tracking stuff)</code></pre>
 <p>To do anything with python using the jupyter notebooks, run</p>
 <pre class="bash"><code>cd .
 Call conda activate mothz
@@ -446,7 +447,7 @@ simulated package <em>mothr</em>. It can be imported using
 latter mode allows newly recompiled C++ code to be included in the
 package, but copies the .dll file for each time it is initiated, which
 can cause memory overflow, especially in multi-session parallel
-computing</p>
+computing.</p>
 <div id="structure" class="section level5">
 <h5>Structure</h5>
 <ul>
@@ -456,9 +457,95 @@ package.
 <ul>
 <li><code>mothr/R/</code> Contains the R source code</li>
 <li><code>mothr/src/</code> Contains the C++ source code</li>
+<li><code>mothr/assets/</code> Contains data used for the functioning
+for the <em>mothr</em> package
+<ul>
+<li><code>color_index_formulas.csv</code> Different RGB transformation
+formulas modified from <em>pilman</em></li>
+<li><code>exclude_flags.csv</code> A single column of the file name of
+photos which should be excluded from analysis due to some error one way
+or another.<br />
+</li>
+<li><code>historic_specimens.csv</code> A single column of the file name
+of photos which are flagged as being from the historic specimens
+collection. Used for deciding which tag_id read output from the OCR
+module with different settings should be kept.<br />
+</li>
+<li><code>image_database.csv</code> A two-column table of the photo
+file_name to image_id mapping.</li>
+<li><code>inference_error.csv</code> A single column of the file name of
+photos which should be excluded from analysis due to some problem with
+the computer vision inference.</li>
+<li><code>real_tag_id.csv</code> A two-column table of the photo
+file_name to tag_id mapping that has been manually entered. Overrides
+whatever the OCR system guesses the tag_id is in the photo.</li>
+</ul></li>
 <li><code>DESCRIPTION</code> Package description file</li>
 <li><code>NAMESPACE</code> Namespace file</li>
+<li><code>.Rbuildignore</code> What to ignore in building the
+<em>mothr</em> package</li>
+<li><code>Package_installation.R</code> a handy script to help you
+install <em>mothr</em> R dependencies.</li>
 </ul></li>
+<li><code>archive/</code> Old and obsolete scripts used to
+development</li>
+<li><code>cleaned_data/</code> Stores cleaned data</li>
+<li><code>coco-annotator/</code> The folder for all
+<em>coco-annotator</em> related program files</li>
+<li><code>COCO_annotations/</code> The folder for storing
+<em>coco-annotator</em> generated annotation files
+<ul>
+<li><code>coco_kp_test.json</code> Obsolete test keypoint
+annotations</li>
+<li><code>coco_mask_test.json</code> Obsolete test mask annotations</li>
+<li><code>mothz_sample1_fullset_keypoints.json</code> Sample 1 keypoint
+annotations</li>
+<li><code>mothz_sample1_fullset_mask.json</code> Sample 1 mask
+annotations</li>
+</ul></li>
+<li><code>detectron2/</code> The folder for all <em>detectron2</em>
+related program files</li>
+<li><code>doc/</code> Some package and repo documentation</li>
+<li><code>inference/</code> Stores inference output from the
+<em>detectron2</em> pipeline
+<ul>
+<li><code>all_batches/</code> Stores inference output for the photo
+database.</li>
+<li><code>full_mothz_sample1_*</code> Store inference output for sample
+1 (including train, test, and val datasets).</li>
+</ul></li>
+<li><code>misc/</code> Misc scripts that are currently in use for
+something but not organized. These scripts are not part of any
+pipeline.</li>
+<li><code>raw_data/</code> Stores raw data</li>
+<li><code>scripts/</code>
+<ul>
+<li><code>cleaning/</code> Some scripts for cleaning
+<ul>
+<li><code>mini_moth.R</code> Script for generating cached mini_moth
+images for faster processing</li>
+<li><code>flagging.R</code> Script for flagging photos</li>
+</ul></li>
+<li><code>pre_inference_processing/</code> Some scripts for
+pre-inference tasks
+<ul>
+<li><code>coco_split.R</code> Script for splitting the coco annotation
+file into training, testing, and validation datasets</li>
+<li><code>training_data_sample.R</code> Script for sampling training
+data from the image database</li>
+</ul></li>
+<li><code>post_inference_processing/</code> Some scripts for
+post-inference tasks
+<ul>
+<li><code>COCO_evaluation.R</code> Script for benchmarking the
+<em>detectron2</em> model</li>
+<li><code>merge_inferences.R</code> Script for merging and parsing the
+raw inferences for all batches</li>
+</ul></li>
+<li><code>training_and_inference/</code> Some scripts for training the
+<em>detectron2</em> model and performing inference</li>
+</ul></li>
+<li><code>README.md</code> The thing that you are reading right now</li>
 </ul>
 </div>
 <div id="key-objects" class="section level5">

@@ -20,7 +20,7 @@ shell(sprintf("Open %s", get_pending_path()))
 
 # Step 3
 ## Merge the validated photos to the database
-# Change the `historic` argument to `TRUE` is the specimens are historic specimens
+# Change the `historic` argument to `TRUE` if the specimens are historic specimens
 new_files <- merge_to_database(historic = FALSE)
 
 # You are probably done here if everything ran smoothly. Now please back up the entire moth_photos folder.

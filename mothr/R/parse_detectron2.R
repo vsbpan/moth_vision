@@ -167,6 +167,10 @@ as.parsed_inference.raw_inference <- function(x, unregistered.ok = FALSE){
       lapply(parse_tag_text)
   }
   if("tick_size" %in% names(x$meta)){
+    if(isTRUE(any(x$meta$tick_size == "get_ruler_failed"))){
+      cli::cli_alert_warning("Ruler detection failed {sum(x$meta$tick_size == 'get_ruler_failed', na.rm = TRUE)} time{?s}.")
+      x$meta$tick_size <- ifelse(x$meta$tick_size == "get_ruler_failed", NA_real_, x$meta$tick_size)
+    }
     img_meta$tick_size <- as.numeric(x$meta$tick_size)
   }
   
