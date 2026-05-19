@@ -15,7 +15,7 @@ This repo hosts code for misc computer vision stuff for Eric's moth collections
 
 ## License & usage <a name="License"></a>
 
-The code in this repo is licensed under GNU GPLv3. The data belong to Eric LoPresti (University of South Carolina). Contact Eric LoPresti for any use of data in this repo. 
+The code in this repo is licensed under GNU GPLv3. The data belong to Eric F. LoPresti (University of South Carolina). Contact Eric F. LoPresti for any use of data in this repo. 
 
 ## Installation <a name="Installation"></a>
 

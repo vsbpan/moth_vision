@@ -46,8 +46,7 @@ print.inlist <- function(x, ...){
   w <- cli::console_width() * 0.7
   
   cat(cli::cli_text("Instance list"))
-  cat(cli::ansi_columns(r1, width = w, align = "left"))
-  cat("\n")
+  cli::cli_verbatim(cli::ansi_columns(r1, width = w, align = "left"))
   cat(cli::cli_text("things: {things}"))
   cat(cli::cli_text("labels: {anno_types}"))
   cat(cli::cli_text("offset: {offset}"))
@@ -66,8 +65,7 @@ print.instance <- function(x, ...){
   w <- cli::console_width() * 0.7
   r1 <- c(sprintf("imageID: %s", image_id), sprintf("instanceID: %s", instance_id))
   cat(cli::cli_text("Instance"))
-  cat(cli::ansi_columns(r1, width = w, align = "left"))
-  cat("\n")
+  cli::cli_verbatim(cli::ansi_columns(r1, width = w, align = "left"))
   cat(cli::cli_text("thing: {thing} ({score})"))
   cat(cli::cli_text("labels: {anno_types}"))
   cat(cli::cli_text("offset: {offset}"))

@@ -68,5 +68,4 @@ assign_image_id <- function(path, unregistered.ok = FALSE){
     
     format(database$image_id[match(fn, database$file_name)], scientific = FALSE, trim = TRUE)
   }
-  
 }

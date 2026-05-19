@@ -110,7 +110,10 @@ init_image_dir <- function(root_path = options("database_path")$database_path,
                            dir_name = "moth_photos",
                            subdir = c("input_photos", "pending_merge", "database", "mini_moth")){
   res <- validate_image_dir(root_path, dir_name = dir_name, subdir = subdir, create = TRUE)
-  if(isTRUE(res)){
+  
+  dirs <- list.dirs(get_database_path(), full.names = FALSE, recursive = FALSE)
+  res2 <- validate_image_dir(get_img_dir_path(), "mini_moth", subdir = dirs, create = TRUE)
+  if(isTRUE(res) && isTRUE(res2)){
     cli::cli_alert_success("Expected directories found.")
   }
 }
@@ -141,6 +144,21 @@ get_img_dir_path <- function(root_path = options("database_path")$database_path,
 get_mini_moth_path <- function(root_path = options("database_path")$database_path){
   res <- paste(get_img_dir_path(root_path),"mini_moth", sep = "/")
   remove_dup_slash(res)
+}
+
+get_batch <- function(x){
+  foo <- function(z){
+    a <- gsub("img|inst", "", z)
+    substr(a, 1, nchar(a) - 5)
+  }
+  x <- ifelse(
+    grepl("img_moth_|mini_moth_", x),
+    gsub("img_moth_|mini_moth_|\\.jpg","", basename(x)),
+    foo(x) # image_id otherwise
+  )
+  x <- as.numeric(x) 
+  
+  sprintf("batch_%02d", ceiling(x / 2000)) # 2000 images per folder
 }
 
 
@@ -244,7 +262,7 @@ merge_to_database <- function(root_path = options("database_path")$database_path
   new_ids <- last_id + seq_len(n_pending)
   new_file_names <- sprintf("img_moth_%08d.jpg", new_ids)
   
-  subdir_path <- paste(db_path, sprintf("batch_%02d", ceiling(new_ids / 2000)), sep = "/") # 2000 images per folder
+  subdir_path <- paste(db_path, get_batch(new_file_names), sep = "/")
   
   # Create subdir if it doesn't exist
   subdir_path %>% 
@@ -385,8 +403,10 @@ remove_dup_slash <- function(x){
 }
 
 
-mini_moth_path <- function(x,root_path = options("database_path")$database_path){
-  remove_dup_slash(paste(get_mini_moth_path(root_path = root_path),basename(gsub("img_", "mini_", x)), sep = "/"))
+mini_moth_path <- function(image_id,root_path = options("database_path")$database_path){
+  remove_dup_slash(paste(get_mini_moth_path(root_path = root_path),
+                         get_batch(image_id),
+                         basename(gsub("img_", "mini_", image_id)), sep = "/"))
 }
 
 find_path <- function(d_ref, tag_id = NULL, image_id = NULL, file_name = NULL, mini_moth = NULL, 
