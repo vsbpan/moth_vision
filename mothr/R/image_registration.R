@@ -26,7 +26,7 @@ check_image_registration <- function(path, register = FALSE, quiet = FALSE){
       last_id <- if(nrow(database) > 0) max(database$image_id) else 0
       
       # Add space in last five digits for unique instance id.
-      new_id <- as.integer(((last_id / 100000) + seq_along(fn_unmatched)) * 100000)
+      new_id <- as.character(((last_id / 100000) + seq_along(fn_unmatched)) * 100000)
       
       
       
@@ -57,7 +57,7 @@ register_image_id <- function(path){
 assign_image_id <- function(path, unregistered.ok = FALSE){
   o <- check_image_registration(path, quiet = TRUE)
   if(unregistered.ok){
-    as.integer(seq_along(path) * 100000)
+    format(seq_along(path) * 100000, scientific = FALSE, trim = TRUE)
   } else {
     if(!all(o)){
       n <- sum(!o)
@@ -66,7 +66,7 @@ assign_image_id <- function(path, unregistered.ok = FALSE){
     database <- fetch_image_database()
     fn <- parse_file_name(path, keep_extn = TRUE)
     
-    as.integer(database$image_id[match(fn, database$file_name)])
+    format(database$image_id[match(fn, database$file_name)], scientific = FALSE, trim = TRUE)
   }
   
 }
