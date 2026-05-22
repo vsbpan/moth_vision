@@ -11,6 +11,9 @@ import_sheets <- function(url, sheet, ...){
 reformat_tag_id <- function(x){
   x %>% 
     lapply(function(w){
+      if(!grepl("-", w)){
+        return(w)
+      }
       v <- str_split(w, "-")[[1]]
       
       if(is.historic(w)){

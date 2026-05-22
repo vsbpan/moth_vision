@@ -413,24 +413,25 @@ mini_moth_path <- function(image_id,root_path = options("database_path")$databas
                          basename(gsub("img_", "mini_", image_id)), sep = "/"))
 }
 
-find_path <- function(d_ref, tag_id = NULL, image_id = NULL, file_name = NULL, mini_moth = NULL, 
-                      database_path = get_database_path()){
+find_path <- function(tag_id = NULL, image_id = NULL, file_name = NULL, mini_moth = NULL, 
+                      database_path = get_database_path(),
+                      d_ref = fetch_path_metadata()){
   if(is.null(tag_id) & is.null(image_id) & is.null(file_name) & is.null(mini_moth)){
     cli::cli_abort("Must supply at least one method to find the path")
   }
   if(!is.null(tag_id)){
     assert_atomic_type(tag_id, "character")
     path <- d_ref %>% 
-      filter(tag_id == {{tag_id}}) %>% 
+      dplyr::filter(tag_id == split_tag_id(reformat_tag_id({{tag_id}}))) %>% 
       .$path
   }
   if(!is.null(image_id)){
     assert_atomic_type(image_id, "character")
-    if(!grepl("img", image_id)){
-      image_id <- paste0("img",image_id)
+    if(grepl("img", image_id)){
+      image_id <- gsub("img","",image_id)
     }
     path <- d_ref %>% 
-      filter(image_id == {{image_id}}) %>% 
+      dplyr::filter(id == {{image_id}}) %>% 
       .$path
   }
   if(!is.null(file_name)){
@@ -440,7 +441,7 @@ find_path <- function(d_ref, tag_id = NULL, image_id = NULL, file_name = NULL, m
       cli::cli_abort("Missing file extension. Cannot find the file. Do you mean {.path {paste0(file_name, '.jpg')}}?")
     }
     path <- d_ref %>% 
-      filter(file_name == {{file_name}}) %>% 
+      dplyr::filter(file_name == {{file_name}}) %>% 
       .$path
   }
   if(!is.null(mini_moth)){
@@ -451,11 +452,12 @@ find_path <- function(d_ref, tag_id = NULL, image_id = NULL, file_name = NULL, m
     }
     mini_moth <- gsub("mini_moth","img_moth",mini_moth)
     path <- d_ref %>% 
-      filter(file_name == {{mini_moth}}) %>% 
+      dplyr::filter(file_name == {{mini_moth}}) %>% 
       .$path
   }
   if(length(path) == 0){
     cli::cli_alert_danger("Cannot find the file path.")
+    return(NULL)
   }
   fn <- basename(path)
   dir <- basename(dirname(path))
