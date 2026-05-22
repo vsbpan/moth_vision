@@ -40,7 +40,8 @@ flag_inference_error<- function(x, version = "1.0"){
     cli::cli_abort("Missing {length(e)} expected file extension{?s}: {e}")
   }
   new_d <- data.frame(
-    "file_name" = fn
+    "file_name" = fn,
+    "version" = version
   )
   db <- rbind(db, new_d) %>% dplyr::distinct()
   n <- length(x)
@@ -51,7 +52,6 @@ flag_inference_error<- function(x, version = "1.0"){
     "Current detection model ver. {cli::col_blue(version)}"
   ))
 }
-
 
 flag_verified_tag_id <- function(x, tag_id){
   db <- fetch_verified_tag_id()

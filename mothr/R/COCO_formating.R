@@ -128,6 +128,7 @@ format_categories_COCO <- function(df){
 
 format_images_COCO <- function(df_meta, df_inference){
   images <- .format_images_engine(df_meta, df_inference)
+  empty_list_list <- lapply(seq_len(nrow(df_meta)), function(x) vector(mode = "list", length = 0))
   # images$annotated <- TRUE
   
   images$deleted <- FALSE
@@ -148,7 +149,7 @@ format_annotations_COCO <- function(df){
   img_id <- assign_image_id(df$file_name)
   thing_id <- match_category_id(df$thing_class)
   instance_id <- sprintf("%05d", df$instance_id) # add up 0 padding to length 5
-  id <- as.integer(as.numeric(gsub_element_wise("00000$", instance_id, img_id)))
+  id <- as.numeric(as.numeric(gsub_element_wise("00000$", instance_id, img_id)))
   
   annotations <- data.frame(
     "category_id" = thing_id,

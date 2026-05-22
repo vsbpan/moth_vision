@@ -1,4 +1,7 @@
 vmisc::load_all2("mothr")
+options(
+  "database_path" = "D:"
+)
 
 parsed_full <- list.files("cleaned_data/all_batches/", full.names = TRUE, pattern = ".rds") %>% 
   lapply(function(x){
@@ -7,9 +10,43 @@ parsed_full <- list.files("cleaned_data/all_batches/", full.names = TRUE, patter
   do.call("rbind", .)
 
 
+l <- readRDS("invisible/googlesheets_tables.rds")
+l[!grepl("not_spread", names(l))] %>% 
+  do.call("rbind.fill", .) %>% 
+  filter(
+    MONA %in% c("8170", "8169", "8196")
+  ) %>% 
+  dplyr::select(
+    tag_id, date, MONA, location
+  ) %>% 
+  mutate(
+    tag_id = reformat_tag_id(tag_id)
+  ) %>% 
+  filter(
+    !is.na(tag_id)
+  ) %>% 
+  .$tag_id -> ids
+
+
+basename(list.files(get_mini_moth_path(), recursive = TRUE)) %>% 
+  gsub("mini_","img_", .) -> mini_moths_haves
+
+parsed_full %>% 
+  update_tag_id() %>% 
+  mutate(
+    tag_id = split_tag_id(tag_id)
+  ) %>% 
+  mutate(
+    a = file_name %in% mini_moths_haves,
+    b = tag_id %in% ids
+  ) %>% 
+  mutate(z = a &!b) %>% 
+  .$z %>% 
+  which() -> ids2
+
 
 pb_par_lapply(
-  1:nrow(parsed_full),
+  ids2,
   function(i, parsed_full){
     if(parsed_full[i, "empty_instance", drop = TRUE]){
       return(invisible(NULL))
@@ -27,13 +64,9 @@ pb_par_lapply(
       return(NULL)
     })
     return(invisible(NULL))
-  }, cores = 4, inorder = FALSE, 
+  }, cores = 3, inorder = FALSE, 
   parsed_full = parsed_full
 )
-
-
-
-
 
 
 

@@ -55,7 +55,7 @@ parsed_historic <- parsed_historic %>%
   )
 
 # Read in WPC meta data
-WPC_d <- import_sheets("https://docs.google.com/spreadsheets/d/1llqU0s4pNzkLHiev1MquWIZSiBvd186V1YclLt1TCNs/edit?gid=0#gid=0", "Sheet1")
+WPC_d <- import_sheets(LINK, "Sheet1")
 
 # Read in taxon info
 d_taxon <- read_csv("raw_data/MPG-Taxa_20230503.csv") %>% 

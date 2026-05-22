@@ -125,7 +125,8 @@ import_raw_inference <- function(path_meta, path_inference){
   df_inference$file_name <- gsub("\\\\","/", df_inference$file_name)
   out <- list(
     "meta" = df_meta,
-    "inference" = df_inference
+    "inference" = df_inference %>% 
+      filter(!is.na(thing_class))
   )
   validate_inference(df_meta, df_inference)
   class(out) <- c("raw_inference", "list")

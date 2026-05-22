@@ -127,7 +127,7 @@ Currently, Git is set to ignore the following directories (mainly due to file si
         - `exclude_flags.csv` A single column of the file name of photos which should be excluded from analysis due to some error one way or another.  
         - `historic_specimens.csv` A single column of the file name of photos which are flagged as being from the historic specimens collection. Used for deciding which tag_id read output from the OCR module with different settings should be kept.  
         - `image_database.csv` A two-column table of the photo file_name to image_id mapping. 
-        - `inference_error.csv` A single column of the file name of photos which should be excluded from analysis due to some problem with the computer vision inference. 
+        - `inference_error.csv` A two-column table of the file name of photos which should be excluded from analysis due to some problem with the computer vision inference and the inference model version number. 
         - `real_tag_id.csv` A two-column table of the photo file_name to tag_id mapping that has been manually entered. Overrides whatever the OCR system guesses the tag_id is in the photo. 
     -   `DESCRIPTION` Package description file
     -   `NAMESPACE` Namespace file
@@ -137,8 +137,6 @@ Currently, Git is set to ignore the following directories (mainly due to file si
 -   `cleaned_data/` Stores cleaned data
 -   `coco-annotator/` The folder for all *coco-annotator* related program files
 -   `COCO_annotations/` The folder for storing *coco-annotator* generated annotation files 
-    -   `coco_kp_test.json` Obsolete test keypoint annotations
-    -   `coco_mask_test.json` Obsolete test mask annotations
     -   `mothz_sample1_fullset_keypoints.json` Sample 1 keypoint annotations
     -   `mothz_sample1_fullset_mask.json` Sample 1 mask annotations
 -   `detectron2/` The folder for all *detectron2* related program files

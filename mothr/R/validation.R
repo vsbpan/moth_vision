@@ -31,7 +31,7 @@ validate_inference <- function(df_meta, df_inference){
   }
   
   # Do other things here
-  
+
   return(invisible(NULL))
   
 }

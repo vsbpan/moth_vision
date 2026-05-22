@@ -54,6 +54,9 @@ split_tag_id <- function(x, collapse = TRUE){
           return(NA_character_)
         }
       }
+      if(!isTRUE(w[1] %in% c("2022", "2023", "2024", "2025", "2026", "2027", "2028", "2029", "2030"))){
+        return(NA_character_)
+      }
       res <- c(w[1], "DCR", w[2])
     }
     
@@ -63,8 +66,13 @@ split_tag_id <- function(x, collapse = TRUE){
     return(res)
   }
   
-  lapply(x, function(z,collapse){
+  res <- lapply(x, function(z,collapse){
     f(z, collapse = collapse)
-  },collapse = collapse) %>% 
-    do.call("c", .)
+  }, collapse = collapse)
+  
+  if(collapse){
+    res <- do.call("c", res)
+  }
+    
+  return(res)
 }
