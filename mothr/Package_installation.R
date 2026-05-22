@@ -33,17 +33,17 @@ check_installation_needed <- function(x, install = TRUE){
                       paste0(out, collapse = ", ")))
       
       if("herbivar" %in% out){
-        out <- out[!c("herbivar") %in% out]
+        out <- out[!out %in% c("herbivar")]
         message("You do not have 'herbivar' installed. Follow instructions from the installation section of the package repository (https://github.com/vsbpan/herbivar) to install from GitHub.")
       }
       
       if("vmisc" %in% out){
-        out <- out[!c("vmisc") %in% out]
+        out <- out[!out %in% c("vmisc")]
         message("You do not have 'vmisc' installed. Follow instructions from the installation section of the package repository (https://github.com/vsbpan/vmisc) to install from GitHub.")
       }
       
       if("rtrees" %in% out){
-        out <- out[!c("rtrees") %in% out]
+        out <- out[!out %in% c("rtrees")]
         message("You do not have 'rtrees' installed. Follow instructions from the installation section of the package repository (https://github.com/daijiang/rtrees) to install from GitHub.")
       }
       
