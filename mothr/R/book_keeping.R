@@ -11,6 +11,18 @@ update_tag_id <- function(x){
   return(x)
 }
 
+update_tick_size <- function(x){
+  db <- fetch_verified_tick_size()
+  x$tick_size <- vapply(seq_along(x$tick_size), function(i){
+    if(x$file_name[i] %in% db$file_name){
+      db$tick_size[which(db$file_name %in% x$file_name[i])]
+    } else {
+      x$tick_size[i]
+    }
+  }, numeric(1))
+  return(x)
+}
+
 
 flag_image_exclude <- function(x){
   db <- fetch_exclude_flags()
