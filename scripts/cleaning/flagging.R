@@ -45,12 +45,3 @@ z <- parsed_full %>%
 z$path[1]
 flag_verified_tag_id(z$path[2], "WPC19122")
 flag_image_exclude(z$path[1])
-
-
-
-
-
-
-
-
-

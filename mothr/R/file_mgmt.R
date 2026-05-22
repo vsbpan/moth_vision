@@ -402,6 +402,10 @@ remove_dup_slash <- function(x){
   gsub("//", "/", x)
 }
 
+switch_root <- function(x){
+  gsub(".*moth_photos", get_img_dir_path(), x)
+}
+
 
 mini_moth_path <- function(image_id,root_path = options("database_path")$database_path){
   remove_dup_slash(paste(get_mini_moth_path(root_path = root_path),

@@ -375,8 +375,8 @@ collections</p>
 <div id="license-usage" class="section level2">
 <h2>License &amp; usage <a name="License"></a></h2>
 <p>The code in this repo is licensed under GNU GPLv3. The data belong to
-Eric LoPresti (University of South Carolina). Contact Eric LoPresti for
-any use of data in this repo.</p>
+Eric F. LoPresti (University of South Carolina). Contact Eric F.
+LoPresti for any use of data in this repo.</p>
 </div>
 <div id="installation" class="section level2">
 <h2>Installation <a name="Installation"></a></h2>
@@ -561,9 +561,10 @@ module with different settings should be kept.<br />
 </li>
 <li><code>image_database.csv</code> A two-column table of the photo
 file_name to image_id mapping.</li>
-<li><code>inference_error.csv</code> A single column of the file name of
-photos which should be excluded from analysis due to some problem with
-the computer vision inference.</li>
+<li><code>inference_error.csv</code> A two-column table of the file name
+of photos which should be excluded from analysis due to some problem
+with the computer vision inference and the inference model version
+number.</li>
 <li><code>real_tag_id.csv</code> A two-column table of the photo
 file_name to tag_id mapping that has been manually entered. Overrides
 whatever the OCR system guesses the tag_id is in the photo.</li>
@@ -583,12 +584,21 @@ development</li>
 <li><code>COCO_annotations/</code> The folder for storing
 <em>coco-annotator</em> generated annotation files
 <ul>
-<li><code>coco_kp_test.json</code> Obsolete test keypoint
-annotations</li>
-<li><code>coco_mask_test.json</code> Obsolete test mask annotations</li>
 <li><code>mothz_sample1_fullset_keypoints.json</code> Sample 1 keypoint
 annotations</li>
 <li><code>mothz_sample1_fullset_mask.json</code> Sample 1 mask
+annotations</li>
+<li><code>coco_kp_test.json</code> Sample 1 testing data keypoint
+annotations</li>
+<li><code>coco_mask_test.json</code> Sample 1 testing data mask
+annotations</li>
+<li><code>coco_kp_train.json</code> Sample 1 training data keypoint
+annotations</li>
+<li><code>coco_mask_train.json</code> Sample 1 training data mask
+annotations</li>
+<li><code>coco_kp_val.json</code> Sample 1 validation data keypoint
+annotations</li>
+<li><code>coco_mask_val.json</code> Sample 1 validation data mask
 annotations</li>
 </ul></li>
 <li><code>detectron2/</code> The folder for all <em>detectron2</em>

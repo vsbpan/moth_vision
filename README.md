@@ -139,6 +139,12 @@ Currently, Git is set to ignore the following directories (mainly due to file si
 -   `COCO_annotations/` The folder for storing *coco-annotator* generated annotation files 
     -   `mothz_sample1_fullset_keypoints.json` Sample 1 keypoint annotations
     -   `mothz_sample1_fullset_mask.json` Sample 1 mask annotations
+    -   `coco_kp_test.json` Sample 1 testing data keypoint annotations
+    -   `coco_mask_test.json` Sample 1 testing data mask annotations
+    -   `coco_kp_train.json` Sample 1 training data keypoint annotations
+    -   `coco_mask_train.json` Sample 1 training data mask annotations
+    -   `coco_kp_val.json` Sample 1 validation data keypoint annotations
+    -   `coco_mask_val.json` Sample 1 validation data mask annotations
 -   `detectron2/` The folder for all *detectron2* related program files
 -   `doc/` Some package and repo documentation
 -   `inference/` Stores inference output from the *detectron2* pipeline
