@@ -21,6 +21,7 @@ parsed_full <- parsed_full %>%
   update_tick_size()
 
 parsed_full$wing_length <- wing_length_calc(parsed_full, units = "mm")
+parsed_full$intertegular_length <- intertegular_length_calc(parsed_full, units = "mm")
 parsed_full <- bind_cols(parsed_full, thing_area_calc(parsed_full, units = "mm"))
 
 
@@ -73,33 +74,43 @@ parsed_full %>%
   mutate(
     path = gsub("D:/", "C:/", path)
   ) %>% 
-  write_csv("cleaned_data/moth_database_size_measurements_May_22_2026.csv")
+  write_csv("cleaned_data/moth_database_size_measurements_May_24_2026.csv")
 
-
+parsed_full <- read_csv("cleaned_data/moth_database_size_measurements_May_24_2026.csv")
 
 parsed_full %>% 
   filter(
-    !is.na(wing_length) & !is.na(MONA)
+    !is.na(intertegular_length) & !is.na(MONA)
   ) %>% 
-  group_by(historic, MONA) %>% 
+  group_by(MONA) %>% 
+  mutate(
+    mm = mean(log(intertegular_length)),
+    se = se(log(intertegular_length)),
+    val = intertegular_length
+  ) %>% 
+  group_by(historic, MONA, Family) %>% 
   summarise(
-    m = mean(log(wing_length)),
-    s = sd(log(wing_length)),
-    n = n()
+    m = mean(log(val)),
+    s = sd(log(val)),
+    n = n(),
+    mm = mean(mm),
+    se = mean(se)
   ) %>% 
   ungroup() %>% 
-  group_by(MONA) %>% 
+  group_by(MONA, Family) %>% 
   filter(
     n() == 2
   ) %>% 
   ungroup() %>% 
   arrange(MONA, historic) %>% 
-  group_by(MONA) %>% 
+  group_by(MONA, Family) %>% 
   summarise(
     d = -diff(m),
     s = vmisc::pooled_SD(s^2, n) * sqrt(sum(1/n)),
     l = d - s * 1.96,
-    u = d + s * 1.96
+    u = d + s * 1.96,
+    m = mean(mm),
+    se = mean(se)
   ) %>% 
   filter(
     !is.na(s)
@@ -111,6 +122,36 @@ parsed_full %>%
   mutate(
     len = length(d)
   ) %>% 
+  # ggplot(aes(x = exp(m), 
+  #            y = exp(d), 
+  #            group = "1",
+  #            color = ifelse(
+  #              u < 0,
+  #              "Decreased",
+  #              ifelse(
+  #                l > 0,
+  #                "Increased",
+  #                "NS"
+  #              )
+  #            ))) + 
+  # geom_pointrange(
+  #   aes(ymin = exp(l), ymax = exp(u)),
+  #   alpha = 0.2
+  # ) +
+  # geom_errorbar(
+  #   aes(
+  #     xmin = exp(m - se * 1.96),
+  #     xmax = exp(m + se * 1.96)
+  #   ),
+  #   alpha = 0.2
+  # ) + 
+  # geom_lineeq(method = "OLS") + 
+  # scale_y_log10(breaks = seq(0.1, 2, by = 0.1)) + 
+  # scale_x_log10() + 
+  # geom_hline(yintercept = 1, color = "black", linetype = "dashed", linewidth = 1) + 
+  # labs(color = "Response", x  = "Body area (mm^2)", y = "Wing length response ratio (Present/Historic)") + 
+  # theme_minimal() + 
+  # theme(legend.position = "top")
   ggplot(aes(x = forcats::fct_reorder(MONA, d), y = exp(d))) + 
   geom_pointrange(
     aes(ymin = exp(l), ymax = exp(u), color = ifelse(
@@ -128,13 +169,13 @@ parsed_full %>%
   coord_flip() + 
   geom_vline(aes(xintercept = len / 2), color = "black", linetype = "dashed", linewidth = 1) + 
   geom_hline(yintercept = 1, color = "black", linetype = "dashed", linewidth = 1) + 
-  labs(color = "Response", x  = "MONA", y = "Wing length response ratio (Present/Historic)") + 
+  labs(color = "Response", x  = "MONA", y = "Intertegular length response ratio (Present/Historic)") + 
   theme_minimal() + 
   facet_wrap(~Family, scales = "free_y") + 
   theme(legend.position = "top") -> g;g
 
 
-ggsave("graphs/all_moth_wing_length_by_family.jpg", g, height = 8, width = 8, dpi = 400)
+ggsave("graphs/all_moth_intertegular_length_by_family.jpg", g, height = 8, width = 8, dpi = 400)
   
 
 

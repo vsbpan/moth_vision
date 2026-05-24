@@ -88,6 +88,38 @@ wing_length_calc <- function(x, FUN = max, units = c("px", "mm")){
   return(res)
 }
 
+intertegular_length_calc <- function(x, FUN = max, units = c("px", "mm")){
+  vmisc::warnifnot(is.parsed_inference(x))
+  
+  FUN <- match.fun(FUN)
+  units <- match.arg(units)
+  
+  assert_variable_in_df(x, c("inlist"))
+  
+  res <- lapply(x$inlist, function(x){
+    m2 <- purrr::map(select_things(x, "forewing"), function(x){
+      m <- x$keypoints["inner",c("x", "y")]
+      m
+    }) %>% 
+      do.call("rbind", .)
+    if(!isTRUE(nrow(m2) == 2L)){
+      return(NA_real_)
+    }  else {
+      return(as.numeric(dist(m2)))
+    }
+  }) %>% 
+    do.call("c",.) %>% 
+    unname()
+  
+  res[!is.finite(res)] <- NA_real_
+  
+  if(units == "mm"){
+    assert_variable_in_df(x, c("tick_size"))
+    res <- res / x$tick_size
+  }
+  return(res)
+}
+
 
 thing_area_calc <- function(x, FUN = max, things = c("forewing", "hindwing", "body"), units = c("px", "mm")){
   vmisc::warnifnot(is.parsed_inference(x))

@@ -8,7 +8,8 @@ version: computer vision model number
 inf_time: when was the computer vision pipeline run? moth/day/year hour:minute:second AM/PM
 tag_id: tag_id that has been validated and matched to the google spreadsheet entires
 tick_size: ruler tick size in pixels / mm
-wing_length: wing length in mm (*: body, forewing, hindwing). If there are two body parts (i.e., left, right), then the maximum of the two is returned.
+wing_length: wing length in mm. If there are two body parts (i.e., left, right), then the maximum of the two is returned.
+intertegular_length: the intertegular length in mm
 *_area: area of body part in mm2 (*: body, forewing, hindwing). If there are two body parts (i.e., left, right), then the maximum of the two is returned.
 date: the date (of collection) column in the metadata spreadsheet. year-month-day 
 MONA: MONA number
